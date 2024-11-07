@@ -1,0 +1,16 @@
+﻿<Properties StartupConfiguration="{973AAC02-5C5B-428E-976E-D092769425F6}|">
+  <MonoDevelop.Ide.ItemProperties.hospitalentry PreferredExecutionTarget="/Applications/Google Chrome.app" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="../../../../../../Library/Frameworks/Mono.framework/Versions/6.6.0/lib/mono/msbuild/Current/bin/Microsoft.Common.CurrentVersion.targets">
+    <Files>
+      <File FileName="hospitalentry/AdmittedPat.aspx.cs" Line="1" Column="1" />
+      <File FileName="hospitalentry/AddNewMed.aspx" />
+      <File FileName="../../../../../../Library/Frameworks/Mono.framework/Versions/6.6.0/lib/mono/msbuild/Current/bin/Microsoft.Common.CurrentVersion.targets" Line="2126" Column="5" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MultiItemStartupConfigurations />
+</Properties>
