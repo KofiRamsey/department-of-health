@@ -97,11 +97,13 @@ export default function DoctorDashboard() {
           <Card className="lg:col-span-2">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-xl font-bold">Today's Schedule</CardTitle>
-              <Input 
-                placeholder="Search patients..." 
-                className="max-w-xs"
-                icon={<Search className="h-4 w-4" />}
-              />
+              <div className="relative max-w-xs">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Search patients..." 
+                  className="pl-8"
+                />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
