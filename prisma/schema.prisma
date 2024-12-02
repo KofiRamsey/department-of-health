@@ -1,0 +1,109 @@
+// This is your Prisma schema file
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String
+  role          Role      @default(PATIENT)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  patientProfile Patient?
+  doctorProfile  Doctor?
+}
+
+model Patient {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id])
+  dateOfBirth   DateTime
+  gender        String
+  bloodType     String?
+  address       String
+  phoneNumber   String
+  emergencyContact String?
+  
+  // Relations
+  appointments  Appointment[]
+  medicalRecords MedicalRecord[]
+}
+
+model Doctor {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id])
+  specialization String
+  licenseNumber String    @unique
+  experience    Int
+  department    String
+  availability  Availability[]
+  
+  // Relations
+  appointments  Appointment[]
+  medicalRecords MedicalRecord[]
+}
+
+model Appointment {
+  id            String    @id @default(cuid())
+  patientId     String
+  doctorId      String
+  dateTime      DateTime
+  status        AppointmentStatus @default(PENDING)
+  reason        String
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  patient       Patient   @relation(fields: [patientId], references: [id])
+  doctor        Doctor    @relation(fields: [doctorId], references: [id])
+}
+
+model MedicalRecord {
+  id            String    @id @default(cuid())
+  patientId     String
+  doctorId      String
+  diagnosis     String
+  prescription  String?
+  notes         String?
+  date          DateTime  @default(now())
+  
+  // Relations
+  patient       Patient   @relation(fields: [patientId], references: [id])
+  doctor        Doctor    @relation(fields: [doctorId], references: [id])
+}
+
+model Availability {
+  id            String    @id @default(cuid())
+  doctorId      String
+  dayOfWeek     Int       // 0-6 for Sunday-Saturday
+  startTime     String    // Format: "HH:mm"
+  endTime       String    // Format: "HH:mm"
+  
+  // Relations
+  doctor        Doctor    @relation(fields: [doctorId], references: [id])
+}
+
+enum Role {
+  ADMIN
+  DOCTOR
+  PATIENT
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}

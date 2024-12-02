@@ -3,6 +3,7 @@ import { HeroSection } from "@/components/homepage/HeroSection"
 import { QuickAccess } from "@/components/homepage/QuickAccess"
 import { AppointmentSection } from "@/components/homepage/AppointmentSection"
 import { MapAndHours } from "@/components/homepage/MapAndHours"
+import { Footer } from "@/components/homepage/Footer"
 
 export default function Home() {
   return (
@@ -12,6 +13,7 @@ export default function Home() {
       <QuickAccess />
       <AppointmentSection />
       <MapAndHours />
+      <Footer />
     </main>
   )
 }
