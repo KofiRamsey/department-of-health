@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-
-
 export const metadata: Metadata = {
   title: "Department of Health",
   description: "Department of Health developed by Msebetsi Solutions",
@@ -14,8 +12,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" suppressHydrationWarning>
+      <head />
+      <body suppressHydrationWarning>
         {children}
       </body>
     </html>
