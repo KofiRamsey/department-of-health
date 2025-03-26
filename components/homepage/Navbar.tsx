@@ -1,3 +1,5 @@
+"use client"
+
 import Image from 'next/image'
 import Link from 'next/link'
 import { Menu } from 'lucide-react'
@@ -9,17 +11,21 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import { usePathname } from 'next/navigation'
 
 const navLinks = [
   ['HOME', '/'],
   ['DOCTOR', '/doctor'],
   ['PATIENT', '/patient'],
   ['SERVICES', '/services'],
+  ['DOCTORS', '/doctors'],
   ['APPOINTMENT', '/appointment'],
   ['CONTACT', '/contact'],
 ] as const
 
 export function Navbar() {
+  const pathname = usePathname()
+  
   return (
     <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b">
       <div className="container mx-auto px-4 py-2">
@@ -35,8 +41,8 @@ export function Navbar() {
               priority
             />
             <div className="hidden sm:block">
-              <h1 className="text-base md:text-xl font-bold">Department Of Health & Social Development</h1>
-              <h2 className="text-sm md:text-lg">PIETERSBURG HOSPITAL</h2>
+              <h1 className="text-base md:text-xl font-bold">Department Of Health</h1>
+              <h2 className="text-sm md:text-lg"> POLOKWANE HOSPITAL</h2>
             </div>
           </div>
 
@@ -46,8 +52,8 @@ export function Navbar() {
               <Link 
                 key={href}
                 href={href} 
-                className={`font-medium text-sm transition-colors hover:text-primary
-                  ${href === '/' ? 'text-orange-500 border-b-2 border-orange-500' : ''}`}
+                className={`font-medium text-lg p-2 transition-colors hover:text-primary
+                  ${pathname === href ? 'text-orange-500' : ''}`}
               >
                 {label}
               </Link>
@@ -86,4 +92,4 @@ export function Navbar() {
       </div>
     </nav>
   )
-} 
+}

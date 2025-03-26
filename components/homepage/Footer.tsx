@@ -37,25 +37,6 @@ export function Footer() {
               <li>Email: info@healthcare.com</li>
             </ul>
           </div>
-
-          {/* Social Links */}
-          <div>
-            <h3 className="text-white text-lg font-semibold mb-4">Follow Us</h3>
-            <div className="flex space-x-4">
-              <Link href="#" className="hover:text-white transition-colors">
-                <Facebook className="h-6 w-6" />
-              </Link>
-              <Link href="#" className="hover:text-white transition-colors">
-                <Twitter className="h-6 w-6" />
-              </Link>
-              <Link href="#" className="hover:text-white transition-colors">
-                <Instagram className="h-6 w-6" />
-              </Link>
-              <Link href="#" className="hover:text-white transition-colors">
-                <Linkedin className="h-6 w-6" />
-              </Link>
-            </div>
-          </div>
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">

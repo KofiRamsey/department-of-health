@@ -6,50 +6,50 @@ import Image from "next/image"
 
 const doctors = [
   {
-    name: "Dr. Sarah Johnson",
+    name: "Dr. Thabo Molefe",
     specialty: "Cardiologist",
     experience: "15+ years experience",
-    education: "MD - Harvard Medical School",
+    education: "MD - University of Cape Town",
     image: "/doctors/doctor1.jpg",
     availability: "Mon, Wed, Fri"
   },
   {
-    name: "Dr. Michael Chen",
+    name: "Dr. Priya Naidoo",
     specialty: "Neurologist",
     experience: "12+ years experience",
-    education: "MD - Johns Hopkins University",
+    education: "MD - University of Witwatersrand",
     image: "/doctors/doctor2.jpg",
     availability: "Tue, Thu, Sat"
   },
   {
-    name: "Dr. Emily Rodriguez",
+    name: "Dr. Nomvula Dlamini",
     specialty: "Pediatrician",
     experience: "10+ years experience",
-    education: "MD - Stanford University",
+    education: "MD - Stellenbosch University",
     image: "/doctors/doctor3.jpg",
     availability: "Mon, Tue, Thu"
   },
   {
-    name: "Dr. James Wilson",
+    name: "Dr. Johannes van der Merwe",
     specialty: "Orthopedic Surgeon",
     experience: "20+ years experience",
-    education: "MD - Yale University",
+    education: "MD - University of Pretoria",
     image: "/doctors/doctor4.jpg",
     availability: "Wed, Thu, Fri"
   },
   {
-    name: "Dr. Lisa Thompson",
+    name: "Dr. Fatima Ebrahim",
     specialty: "Dermatologist",
     experience: "8+ years experience",
-    education: "MD - UCLA Medical School",
+    education: "MD - University of KwaZulu-Natal",
     image: "/doctors/doctor5.jpg",
     availability: "Mon, Wed, Sat"
   },
   {
-    name: "Dr. David Kim",
+    name: "Dr. Sipho Ndlovu",
     specialty: "General Practitioner",
     experience: "14+ years experience",
-    education: "MD - Columbia University",
+    education: "MD - University of Free State",
     image: "/doctors/doctor6.jpg",
     availability: "Tue, Thu, Fri"
   }
