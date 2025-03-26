@@ -27,14 +27,14 @@ export default function DoctorDashboard() {
       
       <div className="container mx-auto px-4 py-8">
         {/* Welcome Section */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Welcome, Dr. Smith</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">Welcome, Dr. Smith</h1>
             <p className="text-muted-foreground">Department of General Medicine</p>
           </div>
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-4">
             <DatePicker />
-            <Button>
+            <Button className="w-full sm:w-auto">
               <UserPlus className="mr-2 h-4 w-4" />
               Add New Patient
             </Button>
@@ -42,7 +42,7 @@ export default function DoctorDashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           <Card className="hover:shadow-lg transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -105,20 +105,20 @@ export default function DoctorDashboard() {
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Today's Schedule */}
           <Card className="lg:col-span-2">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0 pb-2">
               <CardTitle className="text-xl font-bold">Today's Schedule</CardTitle>
-              <div className="flex items-center gap-4">
-                <div className="relative max-w-xs">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
+                <div className="relative flex-1 sm:flex-initial">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input 
                     placeholder="Search patients..." 
-                    className="pl-8"
+                    className="pl-8 w-full"
                   />
                 </div>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto">
                   <Calendar className="h-4 w-4 mr-2" />
                   View Calendar
                 </Button>
@@ -127,14 +127,14 @@ export default function DoctorDashboard() {
             <CardContent>
               <div className="space-y-4">
                 {appointments.map((appointment, i) => (
-                  <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center gap-4">
+                  <div key={i} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors gap-4">
+                    <div className="flex items-center gap-4 w-full sm:w-auto">
                       <div className="bg-blue-100 p-3 rounded-full">
                         <Clock className="h-4 w-4 text-blue-600" />
                       </div>
                       <div>
                         <h4 className="font-medium">{appointment.name}</h4>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm text-muted-foreground">{appointment.type}</p>
                           <Badge variant={appointment.status === 'Confirmed' ? 'success' : 'warning'}>
                             {appointment.status}
@@ -142,9 +142,9 @@ export default function DoctorDashboard() {
                         </div>
                       </div>
                     </div>
-                    <div className="text-right flex items-center gap-4">
+                    <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
                       <p className="font-medium">{appointment.time}</p>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" className="ml-auto sm:ml-0">
                         View Details
                       </Button>
                     </div>
