@@ -53,7 +53,11 @@ function LoginForm() {
     setSuccess("");
     
     try {
-      console.log(`Attempting sign in for ${email}`);
+      // Get the callback URL from the URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlCallbackParam = urlParams.get("callbackUrl");
+      
+      console.log(`Attempting sign in for ${email}, URL callback: ${urlCallbackParam}, prop callback: ${callbackUrl}`);
       
       // Set redirect to false to handle redirection manually
       const result = await signIn("credentials", {
@@ -75,20 +79,30 @@ function LoginForm() {
         
         // Direct role-based redirection
         let destinationUrl = '/';
+        
+        // Priority order: 
+        // 1. Direct role paths for test accounts
+        // 2. URL callback parameter
+        // 3. Default homepage
         if (email === "admin@health.example.com") {
           destinationUrl = "/admin";
         } else if (email === "doctor@health.example.com") {
           destinationUrl = "/doctor";
         } else if (email === "patient@health.example.com") {
           destinationUrl = "/patient";
-        } else if (callbackUrl && callbackUrl !== "/") {
+        } else if (urlCallbackParam && urlCallbackParam !== "/" && !urlCallbackParam.includes("login")) {
+          // Use the callback from URL directly, handle URL encoding
+          destinationUrl = decodeURIComponent(urlCallbackParam);
+        } else if (callbackUrl && callbackUrl !== "/" && !callbackUrl.includes("login")) {
           destinationUrl = callbackUrl;
         }
         
         console.log(`Redirecting user to: ${destinationUrl}`);
         
-        // Manual redirection with full page reload to ensure session is refreshed
-        window.location.href = destinationUrl;
+        // Use replace for a cleaner browser history and more forceful redirect
+        setTimeout(() => {
+          window.location.replace(destinationUrl);
+        }, 500);
       }
     } catch (error) {
       console.error("Sign in error:", error);
@@ -143,9 +157,11 @@ function LoginForm() {
       if (result?.ok) {
         setSuccess(`Successfully logged in as ${type}! Redirecting...`);
         
-        // Direct page navigation with reload to ensure session is completely loaded
+        // Direct page navigation with forceful reload
         console.log(`Redirecting to ${destinationUrl}`);
-        window.location.href = destinationUrl;
+        setTimeout(() => {
+          window.location.replace(destinationUrl);
+        }, 500);
       }
     } catch (error) {
       console.error("Demo login error:", error);
@@ -183,6 +199,13 @@ function LoginForm() {
               {success}
             </div>
           )}
+          
+          {/* Debug information - remove in production when fixed */}
+          <div className="mb-4 text-xs bg-gray-50 p-3 rounded text-gray-500 overflow-auto max-h-20">
+            <div>Current URL: {typeof window !== 'undefined' ? window.location.href : 'N/A'}</div>
+            <div>Callback URL: {callbackUrl || 'None'}</div>
+            <div>Search Params: {typeof window !== 'undefined' ? window.location.search : 'N/A'}</div>
+          </div>
           
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>

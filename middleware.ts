@@ -92,6 +92,13 @@ export async function middleware(request: NextRequest) {
       }
       
       // For regular routes, redirect to login with return URL
+      // Check if we're already on a login page with a callbackUrl to avoid loops
+      if (pathname.includes('/login') && request.nextUrl.search.includes('callbackUrl')) {
+        // Already on login page with a callbackUrl, just continue
+        console.log('Already on login page with callbackUrl, not redirecting again');
+        return NextResponse.next();
+      }
+      
       const returnUrl = encodeURIComponent(request.nextUrl.pathname);
       console.log(`Redirecting unauthenticated user to login with return URL: ${returnUrl}`);
       const loginRedirectUrl = new URL(`/login?callbackUrl=${returnUrl}`, request.url);
