@@ -6,13 +6,15 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { DoctorDetailClient } from "@/components/admin/DoctorDetailClient";
 
-interface DoctorDetailPageProps {
-  params: {
-    id: string;
-  };
+type DoctorParams = { id: string };
+
+// This helps TypeScript understand the params structure
+export async function generateStaticParams() {
+  return [];
 }
 
-export default async function DoctorDetailPage({ params }: DoctorDetailPageProps) {
+// Define the page component
+export default async function DoctorDetailPage({params}: {params: DoctorParams}) {
   // Ensure user is admin
   await requireRole(["ADMIN"]);
   
