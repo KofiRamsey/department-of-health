@@ -55,39 +55,20 @@ function LoginForm() {
     try {
       console.log(`Attempting sign in for ${email} with callback URL: ${callbackUrl}`);
       
-      const result = await signIn("credentials", {
+      await signIn("credentials", {
         email,
         password,
-        redirect: false,
-        callbackUrl
+        redirect: true,
+        callbackUrl: email === "admin@health.example.com" 
+          ? "/admin" 
+          : email === "doctor@health.example.com" 
+            ? "/doctor" 
+            : email === "patient@health.example.com" 
+              ? "/patient" 
+              : callbackUrl
       });
       
-      console.log("Sign in result:", result);
-      
-      if (result?.error) {
-        setFormError("Invalid email or password. Please try again.");
-        setIsLoading(false);
-        return;
-      }
-      
-      if (result?.ok) {
-        setSuccess("Login successful! Redirecting...");
-        
-        // Small delay for feedback before redirect
-        setTimeout(() => {
-          // Get user role and redirect to appropriate dashboard
-          if (email === "admin@health.example.com") {
-            router.push("/admin");
-          } else if (email === "doctor@health.example.com") {
-            router.push("/doctor");
-          } else if (email === "patient@health.example.com") {
-            router.push("/patient");
-          } else {
-            // For database users or fallback
-            router.push(result.url || callbackUrl || "/");
-          }
-        }, 500);
-      }
+      setSuccess("Login successful! Redirecting...");
     } catch (error) {
       console.error("Sign in error:", error);
       setFormError("An unexpected error occurred. Please try again.");
@@ -100,61 +81,37 @@ function LoginForm() {
     setFormError("");
     let email = "";
     let password = "";
+    let redirectUrl = "";
     
     switch(type) {
       case "admin":
         email = "admin@health.example.com";
         password = "Admin123!";
+        redirectUrl = "/admin";
         break;
       case "doctor":
         email = "doctor@health.example.com";
         password = "Doctor123!";
+        redirectUrl = "/doctor";
         break;
       case "patient":
         email = "patient@health.example.com";
         password = "Patient123!";
+        redirectUrl = "/patient";
         break;
     }
     
     try {
       console.log(`Attempting demo login as ${type}`);
       
-      const result = await signIn("credentials", {
+      await signIn("credentials", {
         email,
         password,
-        redirect: false,
-        callbackUrl
+        redirect: true,
+        callbackUrl: redirectUrl
       });
       
-      console.log("Demo login result:", result);
-      
-      if (result?.error) {
-        setFormError(`Failed to login with ${type} demo account. Please try again.`);
-        setIsLoading(false);
-        return;
-      }
-      
-      if (result?.ok) {
-        setSuccess(`Successfully logged in as ${type}! Redirecting...`);
-        
-        // Small delay for feedback
-        setTimeout(() => {
-          // Direct redirection based on type
-          switch(type) {
-            case "admin":
-              router.push("/admin");
-              break;
-            case "doctor":
-              router.push("/doctor");
-              break;
-            case "patient":
-              router.push("/patient");
-              break;
-            default:
-              router.push(callbackUrl || "/");
-          }
-        }, 500);
-      }
+      setSuccess(`Successfully logged in as ${type}! Redirecting...`);
     } catch (error) {
       console.error("Demo login error:", error);
       setFormError("An unexpected error occurred. Please try again.");

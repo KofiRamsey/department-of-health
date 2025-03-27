@@ -2,12 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { useSession, signOut } from 'next-auth/react';
 
 export function DebugAuth() {
   const [showDebug, setShowDebug] = useState(false);
   const [authStatus, setAuthStatus] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Get session data from useSession hook
+  const { data: session, status: sessionStatus } = useSession();
 
   // Check authentication status
   const checkAuth = async () => {
@@ -27,6 +31,16 @@ export function DebugAuth() {
       console.error('Auth check error:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Force clear session
+  const handleSignOut = async () => {
+    try {
+      await signOut({ redirect: false });
+      window.location.href = '/login'; // Force reload to login page
+    } catch (err) {
+      console.error('Sign out error:', err);
     }
   };
 
@@ -62,75 +76,75 @@ export function DebugAuth() {
   }
 
   return (
-    <div className="mt-8 border-t pt-4">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-sm font-medium">Authentication Debug</h3>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => setShowDebug(false)}
-          className="text-xs"
-        >
-          Hide
-        </Button>
-      </div>
+    <div className="mt-8 p-4 border rounded-md bg-gray-50">
+      <h3 className="font-semibold mb-2">Authentication Debug</h3>
       
-      <div className="space-y-2">
-        <div className="flex gap-2">
+      <div className="mb-4">
+        <div className="text-sm mb-1">Session Status: <span className="font-medium">{sessionStatus}</span></div>
+        {session && (
+          <div className="text-xs mt-1">
+            <div>User ID: {session.user?.id || 'Not available'}</div>
+            <div>Email: {session.user?.email || 'Not available'}</div>
+            <div>Role: {session.user?.role || 'Not available'}</div>
+          </div>
+        )}
+        
+        <div className="mt-4">
           <Button 
-            variant="outline" 
             size="sm" 
+            variant="outline" 
             onClick={checkAuth} 
             disabled={loading}
-            className="text-xs"
+            className="mr-2"
           >
-            {loading ? 'Checking...' : 'Check Auth Status'}
+            {loading ? 'Checking...' : 'Check Server Auth'}
           </Button>
           
           <Button 
-            variant="outline" 
             size="sm" 
-            onClick={() => window.location.href = '/api/auth/signin'}
-            className="text-xs"
+            variant="outline" 
+            onClick={handleSignOut}
+            className="bg-red-50 hover:bg-red-100 text-red-700"
           >
-            Auth Signin Page
+            Force Sign Out
           </Button>
         </div>
-        
-        {error && (
-          <div className="p-2 bg-red-50 text-red-700 text-xs rounded">
-            Error: {error}
-          </div>
-        )}
-        
-        {authStatus && (
-          <div className="p-2 bg-gray-50 text-gray-800 text-xs rounded">
-            <div><strong>Status:</strong> {authStatus.status}</div>
-            {authStatus.user && (
-              <>
-                <div><strong>User:</strong> {authStatus.user.email}</div>
-                <div><strong>Role:</strong> {authStatus.user.role}</div>
-              </>
-            )}
-            <div><strong>CSRF Token:</strong> {authStatus.csrfToken ? 'Present' : 'Missing'}</div>
-          </div>
-        )}
-        
-        <div>
-          <h4 className="text-xs font-medium mb-1">Auth Cookies:</h4>
-          <div className="p-2 bg-gray-50 text-gray-800 text-xs rounded max-h-24 overflow-y-auto">
-            {checkCookies().length > 0 ? (
-              <ul className="list-disc list-inside">
-                {checkCookies().map((cookie, i) => (
-                  <li key={i}>{cookie.split('=')[0]}: {cookie.split('=')[1]?.substring(0, 10)}...</li>
-                ))}
-              </ul>
-            ) : (
-              <p>No auth cookies found</p>
-            )}
-          </div>
+      </div>
+      
+      {error && (
+        <div className="mt-2 text-xs text-red-600">{error}</div>
+      )}
+      
+      {authStatus && (
+        <div className="mt-4">
+          <h4 className="text-sm font-medium mb-1">API Auth Status</h4>
+          <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto max-h-40">
+            {JSON.stringify(authStatus, null, 2)}
+          </pre>
+        </div>
+      )}
+      
+      <div className="mt-4">
+        <h4 className="text-sm font-medium mb-1">Auth Cookies</h4>
+        <div className="text-xs">
+          {checkCookies().length > 0 ? (
+            <ul className="list-disc pl-4">
+              {checkCookies().map((cookie, i) => (
+                <li key={i} className="break-all">{cookie}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-red-600">No auth cookies found!</p>
+          )}
         </div>
       </div>
+      
+      <button 
+        onClick={() => setShowDebug(false)}
+        className="mt-4 text-xs text-gray-500 hover:text-gray-700"
+      >
+        Hide Debug Info
+      </button>
     </div>
   );
 } 
