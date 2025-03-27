@@ -66,6 +66,20 @@ export function DebugAuth() {
       );
   };
 
+  // Force set a cookie for testing
+  const handleSetTestCookie = () => {
+    try {
+      // Create a simple test cookie
+      document.cookie = "next-auth.test-cookie=test-value; path=/; max-age=3600; SameSite=Lax";
+      alert("Test cookie has been set. Check cookies again.");
+      // Refresh the page to update cookie display
+      window.location.reload();
+    } catch (err) {
+      console.error('Error setting test cookie:', err);
+      alert('Failed to set test cookie: ' + err);
+    }
+  };
+
   useEffect(() => {
     if (showDebug) {
       checkAuth();
@@ -129,9 +143,18 @@ export function DebugAuth() {
             size="sm" 
             variant="outline" 
             onClick={handleForceReload}
-            className="bg-blue-50 hover:bg-blue-100 text-blue-700"
+            className="bg-blue-50 hover:bg-blue-100 text-blue-700 mr-2"
           >
             Force Reload
+          </Button>
+          
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={handleSetTestCookie}
+            className="bg-yellow-50 hover:bg-yellow-100 text-yellow-700"
+          >
+            Set Test Cookie
           </Button>
         </div>
         

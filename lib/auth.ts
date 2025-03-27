@@ -153,10 +153,7 @@ export const authOptions: NextAuthOptions = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        // Don't require Secure flag - causing issues in some Vercel environments
         secure: false,
-        // Set domain explicitly for Vercel
-        domain: process.env.VERCEL ? ".vercel.app" : undefined,
       },
     },
     callbackUrl: {

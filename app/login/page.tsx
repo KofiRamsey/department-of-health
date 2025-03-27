@@ -178,6 +178,44 @@ function LoginForm() {
     }
   };
   
+  const handleDirectAdminLogin = async () => {
+    setIsLoading(true);
+    setFormError("");
+    setSuccess("Attempting direct login...");
+    
+    try {
+      // Call our custom direct login API
+      const response = await fetch('/api/auth/direct-login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: "admin@health.example.com",
+          password: "Admin123!",
+          destination: "/admin"
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setSuccess(`Direct login successful! Redirecting to ${data.redirectTo}...`);
+        // Navigate to the dashboard page
+        setTimeout(() => {
+          window.location.href = data.redirectTo;
+        }, 500);
+      } else {
+        setFormError(data.message || "Failed to login directly");
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error("Direct login error:", error);
+      setFormError("An unexpected error occurred during direct login");
+      setIsLoading(false);
+    }
+  };
+  
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
@@ -318,6 +356,15 @@ function LoginForm() {
                 disabled={isLoading}
               >
                 Admin Login
+              </Button>
+              
+              <Button 
+                onClick={() => handleDirectAdminLogin()}
+                variant="outline"
+                className="bg-red-50 text-red-700 flex justify-center"
+                disabled={isLoading}
+              >
+                Direct Admin Login (API)
               </Button>
               
               <Button 
