@@ -89,6 +89,12 @@ export function DebugAuth() {
           </div>
         )}
         
+        <div className="text-xs mt-2">
+          <div>Current URL: <code>{typeof window !== 'undefined' ? window.location.href : ''}</code></div>
+          <div>Base URL: <code>{typeof window !== 'undefined' ? window.location.origin : ''}</code></div>
+          <div>Environment: <code>{process.env.NODE_ENV || 'unknown'}</code></div>
+        </div>
+        
         <div className="mt-4">
           <Button 
             size="sm" 

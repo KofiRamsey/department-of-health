@@ -67,7 +67,10 @@ export async function middleware(request: NextRequest) {
       const dashboardUrl = roleDashboards[token.role as keyof typeof roleDashboards];
       if (dashboardUrl) {
         console.log(`Redirecting authenticated user to ${dashboardUrl}`);
-        return NextResponse.redirect(new URL(dashboardUrl, request.url));
+        // Use absolute URL to ensure proper redirection in deployed environments
+        const fullRedirectUrl = new URL(dashboardUrl, request.url);
+        console.log(`Full redirect URL: ${fullRedirectUrl.toString()}`);
+        return NextResponse.redirect(fullRedirectUrl);
       }
     }
     
@@ -91,7 +94,9 @@ export async function middleware(request: NextRequest) {
       // For regular routes, redirect to login with return URL
       const returnUrl = encodeURIComponent(request.nextUrl.pathname);
       console.log(`Redirecting unauthenticated user to login with return URL: ${returnUrl}`);
-      return NextResponse.redirect(new URL(`/login?callbackUrl=${returnUrl}`, request.url));
+      const loginRedirectUrl = new URL(`/login?callbackUrl=${returnUrl}`, request.url);
+      console.log(`Full login redirect URL: ${loginRedirectUrl.toString()}`);
+      return NextResponse.redirect(loginRedirectUrl);
     }
 
     // For role-restricted routes, check permissions
@@ -100,7 +105,9 @@ export async function middleware(request: NextRequest) {
         if (!roles.includes(token.role as string)) {
           // Unauthorized for this role
           console.log(`User with role ${token.role} accessing unauthorized route: ${pathname}`);
-          return NextResponse.redirect(new URL("/unauthorized", request.url));
+          // Use absolute URL for redirection
+          const fullRedirectUrl = new URL("/unauthorized", request.url);
+          return NextResponse.redirect(fullRedirectUrl);
         }
         break;
       }
@@ -113,7 +120,9 @@ export async function middleware(request: NextRequest) {
     
     // If there's an error in the middleware, redirect to login for non-API routes
     if (!pathname.startsWith("/api") && !pathname.startsWith("/_next") && !pathname.startsWith("/api/auth")) {
-      return NextResponse.redirect(new URL("/login?error=middleware_error", request.url));
+      const errorRedirectUrl = new URL("/login?error=middleware_error", request.url);
+      console.log(`Middleware error redirect URL: ${errorRedirectUrl.toString()}`);
+      return NextResponse.redirect(errorRedirectUrl);
     }
     
     // For API routes, continue

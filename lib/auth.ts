@@ -110,26 +110,16 @@ export const authOptions: NextAuthOptions = {
     async redirect({ url, baseUrl }) {
       console.log(`NextAuth redirect callback - URL: ${url}, BaseURL: ${baseUrl}`);
       
-      // Special case for role-based redirections
-      if (url.includes("/login") || url === baseUrl || url === "/") {
-        // Check if we have a role to redirect to a dashboard
-        const roleDashboards = {
-          "ADMIN": "/admin",
-          "DOCTOR": "/doctor",
-          "PATIENT": "/patient"
-        };
-        
-        // Extract role from the URL - this is passed in the callbackUrl from login page
-        if (url.includes("admin")) {
-          console.log("Redirecting to admin dashboard");
-          return `${baseUrl}/admin`;
-        } else if (url.includes("doctor")) {
-          console.log("Redirecting to doctor dashboard");
-          return `${baseUrl}/doctor`;
-        } else if (url.includes("patient")) {
-          console.log("Redirecting to patient dashboard");
-          return `${baseUrl}/patient`;
-        }
+      // Direct role-based redirection - higher priority than other rules
+      if (url.includes("admin")) {
+        console.log("Redirecting to admin dashboard");
+        return new URL("/admin", baseUrl).toString();
+      } else if (url.includes("doctor")) {
+        console.log("Redirecting to doctor dashboard");
+        return new URL("/doctor", baseUrl).toString();
+      } else if (url.includes("patient")) {
+        console.log("Redirecting to patient dashboard");
+        return new URL("/patient", baseUrl).toString();
       }
       
       // For security, if the URL is not part of the app, redirect to home
@@ -140,8 +130,8 @@ export const authOptions: NextAuthOptions = {
 
       // If it's a relative URL, make it absolute
       if (url.startsWith('/')) {
-        console.log(`Converting relative URL: ${url} to absolute`);
-        return `${baseUrl}${url}`;
+        console.log(`Converting relative URL: ${url} to absolute URL: ${new URL(url, baseUrl).toString()}`);
+        return new URL(url, baseUrl).toString();
       }
 
       console.log(`Using URL as-is: ${url}`);

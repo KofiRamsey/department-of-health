@@ -53,21 +53,31 @@ function LoginForm() {
     setSuccess("");
     
     try {
-      console.log(`Attempting sign in for ${email} with callback URL: ${callbackUrl}`);
+      // Determine the appropriate redirect URL based on the email
+      let redirectUrl = callbackUrl;
       
+      if (email === "admin@health.example.com") {
+        redirectUrl = `/admin`;
+        console.log("Using admin redirect URL:", redirectUrl);
+      } else if (email === "doctor@health.example.com") {
+        redirectUrl = `/doctor`;
+        console.log("Using doctor redirect URL:", redirectUrl);
+      } else if (email === "patient@health.example.com") {
+        redirectUrl = `/patient`;
+        console.log("Using patient redirect URL:", redirectUrl);
+      }
+      
+      console.log(`Attempting sign in for ${email} with callback URL: ${redirectUrl}`);
+      
+      // Set redirect to true to allow NextAuth to handle the redirection
       await signIn("credentials", {
         email,
         password,
         redirect: true,
-        callbackUrl: email === "admin@health.example.com" 
-          ? "/admin" 
-          : email === "doctor@health.example.com" 
-            ? "/doctor" 
-            : email === "patient@health.example.com" 
-              ? "/patient" 
-              : callbackUrl
+        callbackUrl: redirectUrl
       });
       
+      // This will only execute if the redirect fails for some reason
       setSuccess("Login successful! Redirecting...");
     } catch (error) {
       console.error("Sign in error:", error);
@@ -102,8 +112,9 @@ function LoginForm() {
     }
     
     try {
-      console.log(`Attempting demo login as ${type}`);
+      console.log(`Attempting demo login as ${type} with redirect URL: ${redirectUrl}`);
       
+      // Using redirect: true for automatic redirection
       await signIn("credentials", {
         email,
         password,
@@ -111,6 +122,7 @@ function LoginForm() {
         callbackUrl: redirectUrl
       });
       
+      // This will only execute if the redirect fails
       setSuccess(`Successfully logged in as ${type}! Redirecting...`);
     } catch (error) {
       console.error("Demo login error:", error);
