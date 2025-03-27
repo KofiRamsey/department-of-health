@@ -50,6 +50,11 @@ export async function middleware(request: NextRequest) {
       secret: process.env.NEXTAUTH_SECRET 
     });
 
+    // Log token for debugging in non-production environments
+    if (process.env.NODE_ENV !== "production") {
+      console.log("Auth token:", token ? "Found" : "Not found");
+    }
+
     // Special case: If at homepage or login page and already logged in, redirect to dashboard
     if ((pathname === "/" || pathname === "/login") && token?.role) {
       const dashboardUrl = roleDashboards[token.role as keyof typeof roleDashboards];
@@ -74,8 +79,9 @@ export async function middleware(request: NextRequest) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
       
-      // For regular routes, redirect to login
-      return NextResponse.redirect(new URL("/login", request.url));
+      // For regular routes, redirect to login with return URL
+      const returnUrl = encodeURIComponent(request.nextUrl.pathname);
+      return NextResponse.redirect(new URL(`/login?callbackUrl=${returnUrl}`, request.url));
     }
 
     // For role-restricted routes, check permissions

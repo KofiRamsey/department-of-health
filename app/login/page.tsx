@@ -13,42 +13,49 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
   const message = searchParams.get("message");
+  const error = searchParams.get("error");
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [formError, setFormError] = useState("");
   const [success, setSuccess] = useState("");
   
   useEffect(() => {
-    if (message) {
+    // Handle URL errors and messages
+    if (error) {
+      setFormError(error === "CredentialsSignin" 
+        ? "Invalid email or password" 
+        : "An error occurred during sign in");
+    } else if (message) {
       if (message.includes("success")) {
         setSuccess(message);
       } else {
-        setError(message);
+        setFormError(message);
       }
     }
-  }, [message]);
+  }, [message, error]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
+    setFormError("");
     setSuccess("");
     
     try {
-      console.log("Attempting sign in with:", { email, password });
-      
       const result = await signIn("credentials", {
         email,
         password,
-        redirect: false
+        redirect: false,
+        callbackUrl
       });
       
-      console.log("Sign in result:", result);
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Sign in result:", result);
+      }
       
       if (result?.error) {
-        setError("Invalid email or password");
+        setFormError("Invalid email or password");
         setIsLoading(false);
         return;
       }
@@ -63,18 +70,19 @@ function LoginForm() {
           router.push("/patient");
         } else {
           // For database users or fallback
-          router.push(result.url || "/");
+          router.push(result.url || callbackUrl || "/");
         }
       }
     } catch (error) {
       console.error("Sign in error:", error);
-      setError("An error occurred. Please try again.");
+      setFormError("An error occurred. Please try again.");
       setIsLoading(false);
     }
   };
   
   const handleDemoLogin = async (type: string) => {
     setIsLoading(true);
+    setFormError("");
     let email = "";
     let password = "";
     
@@ -97,11 +105,12 @@ function LoginForm() {
       const result = await signIn("credentials", {
         email,
         password,
-        redirect: false
+        redirect: false,
+        callbackUrl
       });
       
       if (result?.error) {
-        setError("Failed to login with demo account");
+        setFormError("Failed to login with demo account");
         setIsLoading(false);
         return;
       }
@@ -119,11 +128,11 @@ function LoginForm() {
             router.push("/patient");
             break;
           default:
-            router.push("/");
+            router.push(callbackUrl || "/");
         }
       }
     } catch (error) {
-      setError("An error occurred. Please try again.");
+      setFormError("An error occurred. Please try again.");
       setIsLoading(false);
     }
   };
@@ -144,10 +153,10 @@ function LoginForm() {
         </div>
         
         <div className="mt-8 bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          {error && (
+          {formError && (
             <div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700 flex items-center">
               <AlertCircle className="h-5 w-5 mr-2" />
-              {error}
+              {formError}
             </div>
           )}
           

@@ -5,6 +5,9 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@/lib/db";
 import { compare } from "bcryptjs";
 
+// Determine the base URL based on environment
+const baseUrl = process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db),
   debug: process.env.NODE_ENV !== "production",
@@ -107,8 +110,13 @@ export const authOptions: NextAuthOptions = {
     },
     async redirect({ url, baseUrl }) {
       // For security, if the URL is not part of the app, redirect to home
-      if (!url.startsWith(baseUrl)) {
+      if (!url.startsWith(baseUrl) && !url.startsWith('/')) {
         return baseUrl;
+      }
+
+      // If it's a relative URL, make it absolute
+      if (url.startsWith('/')) {
+        return `${baseUrl}${url}`;
       }
 
       return url;
