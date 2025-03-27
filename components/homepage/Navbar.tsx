@@ -1,95 +1,138 @@
 "use client"
 
-import Image from 'next/image'
-import Link from 'next/link'
-import { Menu } from 'lucide-react'
-import { Button } from "@/components/ui/button"
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
-import { usePathname } from 'next/navigation'
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { Menu, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const navLinks = [
-  ['HOME', '/'],
-  ['DOCTOR', '/doctor'],
-  ['PATIENT', '/patient'],
-  ['SERVICES', '/services'],
-  ['DOCTORS', '/doctors'],
-  ['APPOINTMENT', '/appointment'],
-  ['CONTACT', '/contact'],
-] as const
+  { href: "/", label: "Home" },
+  { href: "/services", label: "Services" },
+  { href: "/doctors", label: "Doctors" },
+  { href: "/contact", label: "Contact" },
+  { href: "/login", label: "Login" },
+];
 
 export function Navbar() {
-  const pathname = usePathname()
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const { data: session } = useSession();
+  
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+  
+  const linkStyle = "text-gray-700 hover:text-primary transition-colors";
+  const activeLinkStyle = "text-primary font-semibold border-b-2 border-primary";
+  
+  const displayLinks = navLinks.filter(link => {
+    // Hide login link if user is logged in
+    if (link.href === "/login" && session) {
+      return false;
+    }
+    return true;
+  });
+  
+  // Get dashboard link based on user role
+  const getDashboardLink = () => {
+    if (!session) return null;
+    
+    const role = session.user.role;
+    let href = "/patient";
+    let label = "Dashboard";
+    
+    if (role === "ADMIN") {
+      href = "/admin";
+      label = "Admin Dashboard";
+    } else if (role === "DOCTOR") {
+      href = "/doctor";
+      label = "Doctor Dashboard";
+    }
+    
+    return { href, label };
+  };
+  
+  const dashboardLink = getDashboardLink();
   
   return (
-    <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b">
-      <div className="container mx-auto px-4 py-2">
-        <div className="flex items-center justify-between">
-          {/* Logo and Title */}
-          <div className="flex items-center gap-4">
-            <Image 
-              src="/logo.png" 
-              alt="Pietersburg Hospital Logo" 
-              width={100} 
-              height={100}
-              className="w-auto h-auto"
-              priority
-            />
-            <div className="hidden sm:block">
-              <h1 className="text-base md:text-xl font-bold">Department Of Health</h1>
-              <h2 className="text-sm md:text-lg"> POLOKWANE HOSPITAL</h2>
-            </div>
-          </div>
-
+    <nav className="bg-white shadow-sm">
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex justify-between items-center">
+          <Link href="/" className="flex items-center">
+            <h1 className="text-xl font-bold text-primary">Department of Health</h1>
+          </Link>
+          
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center gap-8">
-            {navLinks.map(([label, href]) => (
-              <Link 
-                key={href}
-                href={href} 
-                className={`font-medium text-lg p-2 transition-colors hover:text-primary
-                  ${pathname === href ? 'text-orange-500' : ''}`}
+          <div className="hidden md:flex space-x-8">
+            {displayLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  linkStyle,
+                  pathname === link.href && activeLinkStyle
+                )}
               >
-                {label}
+                {link.label}
               </Link>
             ))}
+            
+            {dashboardLink && (
+              <Link
+                href={dashboardLink.href}
+                className={cn(
+                  "bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition-colors",
+                  pathname.startsWith(dashboardLink.href) && "bg-primary/90"
+                )}
+              >
+                {dashboardLink.label}
+              </Link>
+            )}
           </div>
-
-          {/* Mobile Navigation */}
-          <div className="lg:hidden">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-6 w-6" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle>Navigation Menu</SheetTitle>
-                </SheetHeader>
-                <div className="flex flex-col gap-4 mt-8">
-                  {navLinks.map(([label, href]) => (
-                    <Link 
-                      key={href}
-                      href={href} 
-                      className={`font-medium text-lg p-2 transition-colors hover:text-primary
-                        ${href === '/' ? 'text-orange-500' : ''}`}
-                    >
-                      {label}
-                    </Link>
-                  ))}
-                </div>
-              </SheetContent>
-            </Sheet>
+          
+          {/* Mobile Menu Button */}
+          <div className="md:hidden">
+            <button onClick={toggleMenu} className="text-gray-500 hover:text-gray-700">
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
         </div>
+        
+        {/* Mobile Navigation */}
+        {isMenuOpen && (
+          <div className="md:hidden mt-4 pb-4 space-y-4">
+            {displayLinks.map((link) => (
+              <div key={link.href}>
+                <Link
+                  href={link.href}
+                  className={cn(
+                    "block py-2",
+                    linkStyle,
+                    pathname === link.href && activeLinkStyle
+                  )}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              </div>
+            ))}
+            
+            {dashboardLink && (
+              <div>
+                <Link
+                  href={dashboardLink.href}
+                  className="block py-2 text-primary font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {dashboardLink.label}
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </nav>
-  )
+  );
 }

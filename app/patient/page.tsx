@@ -1,9 +1,9 @@
 'use client'
-import { useState } from "react"
-import { Navbar } from "@/components/homepage/Navbar"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { signOut, useSession } from "next-auth/react"
 import { 
   Calendar, 
   Clock, 
@@ -14,115 +14,50 @@ import {
   MessageSquare,
   Settings,
   Bell,
-  BarChart
+  BarChart,
+  LogOut
 } from "lucide-react"
-
-// Add this import at the top
+import { useRouter } from "next/navigation"
 import * as React from "react"
 
 export default function PatientDashboard() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-    // For now, just set authenticated to true
-    setIsAuthenticated(true)
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  
+  useEffect(() => {
+    // If authentication is loading, wait for it
+    if (status === "loading") return;
+    
+    // If not authenticated or not a patient, redirect to login
+    if (!session || (session.user.role !== "PATIENT" && session.user.role !== "ADMIN")) {
+      router.push('/login');
+    }
+  }, [session, status, router]);
+  
+  // If authentication is still loading or no session, show loading screen
+  if (status === "loading" || !session) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
-  const handleLogout = () => {
-    setIsAuthenticated(false)
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <main className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="container mx-auto flex items-center justify-center px-4 py-20">
-          <Card className="w-full max-w-md">
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-3xl font-bold text-center">
-                Patient Login
-              </CardTitle>
-            </CardHeader>
-            
-            <CardContent>
-              <form className="space-y-4" onSubmit={handleLogin}>
-                <div className="space-y-2">
-                  <label htmlFor="identifier" className="text-sm font-medium">
-                    Patient ID Number
-                  </label>
-                  <Input
-                    id="identifier"
-                    type="text"
-                    placeholder="Enter your Patient ID"
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <label htmlFor="password" className="text-sm font-medium">
-                    Password
-                  </label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    required
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" className="rounded border-gray-300" />
-                    Remember me
-                  </label>
-                  <a 
-                    href="#" 
-                    className="text-sm text-primary hover:underline"
-                  >
-                    Forgot Password?
-                  </a>
-                </div>
-
-                <div className="space-y-4">
-                  <Button type="submit" className="w-full">
-                    Login
-                  </Button>
-                  
-                  {/* View Dashboard button for development */}
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    className="w-full" 
-                    onClick={() => setIsAuthenticated(true)}
-                  >
-                    View Dashboard
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-    )
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: '/' });
   }
 
   return (
     <main className="min-h-screen bg-gray-50">
-      <Navbar />
-      
       <div className="container mx-auto px-4 py-8">
         {/* Welcome Section with Notifications */}
         <div className="mb-8 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Welcome, John Doe</h1>
-            <p className="text-muted-foreground">Patient ID: P123456</p>
+            <h1 className="text-3xl font-bold">Welcome, {session.user.name || 'Patient'}</h1>
+            <p className="text-muted-foreground">Patient Dashboard</p>
           </div>
           <div className="flex items-center gap-4">
             <Button variant="outline" size="icon">
               <Bell className="h-5 w-5" />
             </Button>
             <Button variant="outline" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
               Logout
             </Button>
           </div>

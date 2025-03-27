@@ -1,282 +1,195 @@
-import { Navbar } from "@/components/homepage/Navbar"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+"use client";
 
-export default function Register() {
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { MailIcon, KeyIcon, UserIcon, Loader2 } from "lucide-react";
+
+export default function RegisterPage() {
+  const router = useRouter();
+  
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+    
+    // Validate passwords match
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
+    
+    // For demo purposes, just redirect to login since we're using hard-coded accounts
+    try {
+      router.push("/login?message=Registration successful! Please log in.");
+    } catch (error) {
+      setError("An error occurred. Please try again.");
+      setIsLoading(false);
+    }
+  };
+  
   return (
-    <main className="min-h-screen bg-gray-50">
-      <Navbar />
-      
-      <div className="container mx-auto px-4 py-10">
-        <Card className="max-w-3xl mx-auto">
-          <CardHeader>
-            <CardTitle className="text-3xl font-bold text-center">
-              Register
-            </CardTitle>
-          </CardHeader>
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md space-y-8">
+        <div className="text-center">
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+            Create an account
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Or{" "}
+            <Link href="/login" className="text-primary hover:text-primary/90">
+              sign in to your account
+            </Link>
+          </p>
+        </div>
+        
+        <div className="mt-8 bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          {error && (
+            <div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700">
+              {error}
+            </div>
+          )}
           
-          <CardContent>
-            <form className="space-y-6">
-              {/* Account Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Account Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label htmlFor="email" className="text-sm font-medium">
-                      Email Address
-                    </label>
-                    <Input
-                      id="email"
-                      type="email"
-                      required
-                      placeholder="Enter your email"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="password" className="text-sm font-medium">
-                      Password
-                    </label>
-                    <Input
-                      id="password"
-                      type="password"
-                      required
-                      placeholder="Create a password"
-                    />
-                  </div>
-
-                  <div className="space-y-2 md:col-span-2">
-                    <label htmlFor="confirmPassword" className="text-sm font-medium">
-                      Confirm Password
-                    </label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      required
-                      placeholder="Retype your password"
-                    />
-                  </div>
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                Full Name
+              </label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <UserIcon className="h-5 w-5 text-gray-400" />
                 </div>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  autoComplete="name"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
+                  placeholder="Your name"
+                />
               </div>
-
-              {/* Personal Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Personal Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label htmlFor="patientID" className="text-sm font-medium">
-                      Patient ID
-                    </label>
-                    <Input
-                      id="patientID"
-                      type="text"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label htmlFor="idNumber" className="text-sm font-medium">
-                      ID Number
-                    </label>
-                    <Input
-                      id="idNumber"
-                      type="text"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="name" className="text-sm font-medium">
-                      Name
-                    </label>
-                    <Input
-                      id="name"
-                      type="text"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="surname" className="text-sm font-medium">
-                      Surname
-                    </label>
-                    <Input
-                      id="surname"
-                      type="text"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="age" className="text-sm font-medium">
-                      Age
-                    </label>
-                    <Input
-                      id="age"
-                      type="number"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="nationality" className="text-sm font-medium">
-                      Nationality
-                    </label>
-                    <Input
-                      id="nationality"
-                      type="text"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="billingGroup" className="text-sm font-medium">
-                      Billing Group
-                    </label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select billing group" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="government">Government</SelectItem>
-                        <SelectItem value="private">Private</SelectItem>
-                        <SelectItem value="insurance">Insurance</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="dob" className="text-sm font-medium">
-                      Date of Birth
-                    </label>
-                    <Input
-                      id="dob"
-                      type="date"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="sex" className="text-sm font-medium">
-                      Sex
-                    </label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select sex" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="male">Male</SelectItem>
-                        <SelectItem value="female">Female</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="maritalStatus" className="text-sm font-medium">
-                      Marital Status
-                    </label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select marital status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="single">Single</SelectItem>
-                        <SelectItem value="married">Married</SelectItem>
-                        <SelectItem value="divorced">Divorced</SelectItem>
-                        <SelectItem value="widowed">Widowed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="race" className="text-sm font-medium">
-                      Race
-                    </label>
-                    <Input
-                      id="race"
-                      type="text"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2 md:col-span-2">
-                    <label htmlFor="address" className="text-sm font-medium">
-                      Mailing Address
-                    </label>
-                    <Input
-                      id="address"
-                      type="text"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2 md:col-span-2">
-                    <label htmlFor="contact" className="text-sm font-medium">
-                      Contact Numbers
-                    </label>
-                    <Input
-                      id="contact"
-                      type="tel"
-                      required
-                    />
-                  </div>
+            </div>
+            
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email address
+              </label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <MailIcon className="h-5 w-5 text-gray-400" />
                 </div>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
+                  placeholder="you@example.com"
+                />
               </div>
-
-              {/* Next of Kin */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Next of Kin</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label htmlFor="kinName" className="text-sm font-medium">
-                      Name
-                    </label>
-                    <Input
-                      id="kinName"
-                      type="text"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="kinAddress" className="text-sm font-medium">
-                      Address
-                    </label>
-                    <Input
-                      id="kinAddress"
-                      type="text"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="kinPhone" className="text-sm font-medium">
-                      Tel Number
-                    </label>
-                    <Input
-                      id="kinPhone"
-                      type="tel"
-                      required
-                    />
-                  </div>
+            </div>
+            
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <KeyIcon className="h-5 w-5 text-gray-400" />
                 </div>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
+                  placeholder="••••••••"
+                />
               </div>
-
-              <Button type="submit" className="w-full">
-                Register
+            </div>
+            
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                Confirm Password
+              </label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <KeyIcon className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Button
+                type="submit"
+                className="w-full py-2"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating account...
+                  </>
+                ) : (
+                  "Create account"
+                )}
               </Button>
-            </form>
-          </CardContent>
-        </Card>
+            </div>
+          </form>
+          
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">
+                  Or use a test account
+                </span>
+              </div>
+            </div>
+            
+            <div className="mt-6 text-center">
+              <Link 
+                href="/login" 
+                className="text-primary hover:text-primary/90"
+              >
+                Go to login to use test accounts
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
-    </main>
-  )
+    </div>
+  );
 }

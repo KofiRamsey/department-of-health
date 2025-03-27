@@ -1,87 +1,71 @@
-# Msebetsi Department of Health Application
+# Department of Health Application
 
-A modern, responsive healthcare platform built with Next.js, designed to streamline medical services and improve patient care experience.
+This is a Next.js application for a healthcare department, providing interfaces for patients, doctors, and administrators.
+
+## Setup
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Create a `.env.local` file in the root directory with the following environment variables:
+
+```
+# Clerk Authentication
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+CLERK_SECRET_KEY=your_clerk_secret_key
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/select-dashboard
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/select-dashboard
+```
+
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+## Clerk Authentication Setup
+
+1. Create a Clerk account at [clerk.com](https://clerk.com)
+2. Create a new application
+3. Go to API Keys in the Clerk dashboard
+4. Copy the Publishable Key and Secret Key to your `.env.local` file
+5. Configure the JWT templates to include user roles
+
+### Setting up User Roles in Clerk
+
+To use roles with Clerk:
+
+1. Go to your Clerk dashboard
+2. Navigate to JWT Templates
+3. Create a template with the following claims:
+
+```json
+{
+  "role": "{{public_metadata.role}}"
+}
+```
+
+4. Use the template for your application
 
 ## Features
 
-### 🏥 Homepage
-- Modern hero section with call-to-action
-- Quick access to essential services
-- Appointment scheduling section
-- Location and operating hours information
+- **Authentication**: User authentication using Clerk
+- **Role-based Access Control**: Different dashboards for patients, doctors, and administrators
+- **Profile Management**: User profile editing with Clerk
+- **Health Services**: View and book health services
+- **Appointment Management**: Schedule and manage appointments
+- **Doctor Directory**: Browse and filter healthcare providers
 
-### 👨‍⚕️ Medical Services
-- Comprehensive list of medical specialties
-- Detailed service descriptions
-- Key features for each service
-- Easy navigation to appointment booking
+## Architecture
 
-### 🗓️ Appointment System
-- User-friendly appointment booking interface
-- Department and doctor selection
-- Date and time scheduling
-- Additional information input
+The application is built with:
 
-### 👥 Doctor Profiles
-- Detailed doctor information
-- Specialization and experience
-- Education background
-- Availability schedule
-
-### 📞 Contact Information
-- Contact form for inquiries
-- Location information with map
-- Emergency contact numbers
-- Working hours
-
-## Tech Stack
-
-- **Framework**: Next.js 15
-- **Styling**: Tailwind CSS
-- **UI Components**: Shadcn/ui
-- **Icons**: Lucide React
-
-## Getting Started
-
-1. Clone the repository:
-```bash
-git clone [your-repository-url]
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Run the development server:
-```bash
-npm run dev
-```
-
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
-
-## Project Structure
-
-```
-department-of-health/
-├── app/                    # Next.js app directory
-│   ├── page.tsx           # Homepage
-│   ├── services/          # Services page
-│   ├── doctors/           # Doctors page
-│   ├── appointment/       # Appointment page
-│   └── contact/           # Contact page
-├── components/            # Reusable components
-│   ├── homepage/         # Homepage-specific components
-│   └── ui/               # UI components
-├── public/               # Static assets
-└── styles/              # Global styles
-```
-
-## Features to be Added
-
-- User authentication
-- Patient portal
-- Medical records system
-- Online consultation
-- Prescription management
-- Payment integration
+- Next.js 15 with App Router
+- Clerk for authentication
+- Prisma ORM
+- PostgreSQL database
+- Tailwind CSS for styling
+- shadcn/ui components
