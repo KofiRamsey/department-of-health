@@ -37,7 +37,8 @@ export function Navbar() {
   
   // Get dashboard link based on user role
   const getDashboardLink = () => {
-    if (!session) return null;
+    // Don't show dashboard on login page since we'll redirect directly
+    if (!session || pathname === "/login") return null;
     
     const role = session.user.role;
     let href = "/patient";

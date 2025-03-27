@@ -66,7 +66,7 @@ export async function middleware(request: NextRequest) {
     if ((pathname === "/" || pathname === "/login") && token?.role) {
       const dashboardUrl = roleDashboards[token.role as keyof typeof roleDashboards];
       if (dashboardUrl) {
-        console.log(`Redirecting authenticated user to ${dashboardUrl}`);
+        console.log(`Redirecting authenticated user with role ${token.role} to ${dashboardUrl}`);
         // Use absolute URL to ensure proper redirection in deployed environments
         const fullRedirectUrl = new URL(dashboardUrl, request.url);
         console.log(`Full redirect URL: ${fullRedirectUrl.toString()}`);

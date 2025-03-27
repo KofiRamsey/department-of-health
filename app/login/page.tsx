@@ -53,32 +53,43 @@ function LoginForm() {
     setSuccess("");
     
     try {
-      // Determine the appropriate redirect URL based on the email
-      let redirectUrl = callbackUrl;
+      console.log(`Attempting sign in for ${email}`);
       
-      if (email === "admin@health.example.com") {
-        redirectUrl = `/admin`;
-        console.log("Using admin redirect URL:", redirectUrl);
-      } else if (email === "doctor@health.example.com") {
-        redirectUrl = `/doctor`;
-        console.log("Using doctor redirect URL:", redirectUrl);
-      } else if (email === "patient@health.example.com") {
-        redirectUrl = `/patient`;
-        console.log("Using patient redirect URL:", redirectUrl);
-      }
-      
-      console.log(`Attempting sign in for ${email} with callback URL: ${redirectUrl}`);
-      
-      // Set redirect to true to allow NextAuth to handle the redirection
-      await signIn("credentials", {
+      // Set redirect to false to handle redirection manually
+      const result = await signIn("credentials", {
         email,
         password,
-        redirect: true,
-        callbackUrl: redirectUrl
+        redirect: false
       });
       
-      // This will only execute if the redirect fails for some reason
-      setSuccess("Login successful! Redirecting...");
+      console.log("Sign in result:", result);
+      
+      if (result?.error) {
+        setFormError("Invalid email or password. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+      
+      if (result?.ok) {
+        setSuccess("Login successful! Redirecting...");
+        
+        // Direct role-based redirection
+        let destinationUrl = '/';
+        if (email === "admin@health.example.com") {
+          destinationUrl = "/admin";
+        } else if (email === "doctor@health.example.com") {
+          destinationUrl = "/doctor";
+        } else if (email === "patient@health.example.com") {
+          destinationUrl = "/patient";
+        } else if (callbackUrl && callbackUrl !== "/") {
+          destinationUrl = callbackUrl;
+        }
+        
+        console.log(`Redirecting user to: ${destinationUrl}`);
+        
+        // Manual redirection with full page reload to ensure session is refreshed
+        window.location.href = destinationUrl;
+      }
     } catch (error) {
       console.error("Sign in error:", error);
       setFormError("An unexpected error occurred. Please try again.");
@@ -91,39 +102,51 @@ function LoginForm() {
     setFormError("");
     let email = "";
     let password = "";
-    let redirectUrl = "";
+    let destinationUrl = "/";
     
     switch(type) {
       case "admin":
         email = "admin@health.example.com";
         password = "Admin123!";
-        redirectUrl = "/admin";
+        destinationUrl = "/admin";
         break;
       case "doctor":
         email = "doctor@health.example.com";
         password = "Doctor123!";
-        redirectUrl = "/doctor";
+        destinationUrl = "/doctor";
         break;
       case "patient":
         email = "patient@health.example.com";
         password = "Patient123!";
-        redirectUrl = "/patient";
+        destinationUrl = "/patient";
         break;
     }
     
     try {
-      console.log(`Attempting demo login as ${type} with redirect URL: ${redirectUrl}`);
+      console.log(`Attempting demo login as ${type}`);
       
-      // Using redirect: true for automatic redirection
-      await signIn("credentials", {
+      // Using redirect: false for manual redirection
+      const result = await signIn("credentials", {
         email,
         password,
-        redirect: true,
-        callbackUrl: redirectUrl
+        redirect: false
       });
       
-      // This will only execute if the redirect fails
-      setSuccess(`Successfully logged in as ${type}! Redirecting...`);
+      console.log("Demo login result:", result);
+      
+      if (result?.error) {
+        setFormError(`Failed to login with ${type} demo account. Please try again.`);
+        setIsLoading(false);
+        return;
+      }
+      
+      if (result?.ok) {
+        setSuccess(`Successfully logged in as ${type}! Redirecting...`);
+        
+        // Direct page navigation with reload to ensure session is completely loaded
+        console.log(`Redirecting to ${destinationUrl}`);
+        window.location.href = destinationUrl;
+      }
     } catch (error) {
       console.error("Demo login error:", error);
       setFormError("An unexpected error occurred. Please try again.");
