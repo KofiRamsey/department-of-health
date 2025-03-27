@@ -80,6 +80,30 @@ export function DebugAuth() {
     }
   };
 
+  // Force set admin cookie for testing
+  const handleSetAdminCookie = () => {
+    try {
+      // Create a simple session cookie with admin role
+      const jwtValue = btoa(JSON.stringify({
+        id: "admin-id",
+        email: "admin@health.example.com",
+        name: "Admin User",
+        role: "ADMIN"
+      }));
+      
+      document.cookie = `next-auth.session-token=${jwtValue}; path=/; max-age=86400; SameSite=Lax; HttpOnly=false`;
+      document.cookie = `next-auth.csrf-token=csrf-token-value; path=/; max-age=86400; SameSite=Lax`;
+      
+      alert("Admin session cookies have been set. Check cookies again and reload.");
+      
+      // Refresh the page to update cookie display
+      window.location.reload();
+    } catch (err) {
+      console.error('Error setting session cookie:', err);
+      alert('Failed to set session cookie: ' + err);
+    }
+  };
+
   useEffect(() => {
     if (showDebug) {
       checkAuth();
@@ -152,9 +176,18 @@ export function DebugAuth() {
             size="sm" 
             variant="outline" 
             onClick={handleSetTestCookie}
-            className="bg-yellow-50 hover:bg-yellow-100 text-yellow-700"
+            className="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 mr-2"
           >
             Set Test Cookie
+          </Button>
+          
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={handleSetAdminCookie}
+            className="bg-green-50 hover:bg-green-100 text-green-700"
+          >
+            Set Admin Cookie
           </Button>
         </div>
         

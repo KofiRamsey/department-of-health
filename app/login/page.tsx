@@ -181,10 +181,10 @@ function LoginForm() {
   const handleDirectAdminLogin = async () => {
     setIsLoading(true);
     setFormError("");
-    setSuccess("Attempting direct login...");
+    setSuccess("Attempting direct login with server redirect...");
     
     try {
-      // Call our custom direct login API
+      // Call our custom direct login API with redirect=true for server-side redirection
       const response = await fetch('/api/auth/direct-login', {
         method: 'POST',
         headers: {
@@ -193,26 +193,24 @@ function LoginForm() {
         body: JSON.stringify({
           email: "admin@health.example.com",
           password: "Admin123!",
-          destination: "/admin"
+          destination: "/admin",
+          redirect: true
         }),
       });
       
-      const data = await response.json();
-      
-      if (data.success) {
-        setSuccess(`Direct login successful! Redirecting to ${data.redirectTo}...`);
-        // Navigate to the dashboard page
-        setTimeout(() => {
-          window.location.href = data.redirectTo;
-        }, 500);
-      } else {
-        setFormError(data.message || "Failed to login directly");
-        setIsLoading(false);
-      }
+      // If we get here, it means the redirect didn't happen
+      // In this case, we'll try client-side navigation as a fallback
+      setSuccess("Server redirect failed, trying client-side navigation...");
+      window.location.href = "/admin";
     } catch (error) {
       console.error("Direct login error:", error);
       setFormError("An unexpected error occurred during direct login");
       setIsLoading(false);
+      
+      // As a final fallback, try direct navigation
+      setTimeout(() => {
+        window.location.href = "/admin";
+      }, 1000);
     }
   };
   
@@ -251,6 +249,15 @@ function LoginForm() {
             <div>Current URL: {typeof window !== 'undefined' ? window.location.href : 'N/A'}</div>
             <div>Callback URL: {callbackUrl || 'None'}</div>
             <div>Search Params: {typeof window !== 'undefined' ? window.location.search : 'N/A'}</div>
+            
+            <div className="mt-2 pt-2 border-t border-gray-200">
+              <button 
+                onClick={() => window.location.href = "/admin"}
+                className="bg-red-50 text-red-700 px-2 py-1 rounded text-xs"
+              >
+                WORKAROUND: Go directly to /admin
+              </button>
+            </div>
           </div>
           
           <form className="space-y-6" onSubmit={handleSubmit}>

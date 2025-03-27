@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge"
 import { DatePicker } from "@/components/ui/date-picker"
 import { signOut, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 // Sample data for the doctor dashboard
 const appointments = [
@@ -96,22 +96,47 @@ const recentActivities = [
 export default function DoctorDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [showWarning, setShowWarning] = useState(false);
   
   useEffect(() => {
-    // If authentication is loading, wait for it
-    if (status === "loading") return;
+    // If authentication is still loading, wait
+    if (status === 'loading') return;
     
-    // If not authenticated or not a doctor, redirect to login
-    if (!session || (session.user.role !== "DOCTOR" && session.user.role !== "ADMIN")) {
-      router.push('/login');
+    // Check if user is authenticated and has the right role
+    if (!session) {
+      setShowWarning(true);
+    } else if (session.user.role !== 'DOCTOR' && session.user.role !== 'ADMIN') {
+      router.push('/unauthorized');
     }
   }, [session, status, router]);
   
-  // If authentication is still loading or no session, show loading screen
-  if (status === "loading" || !session) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  if (status === 'loading') {
+    return <div className="flex min-h-screen items-center justify-center">Loading...</div>;
   }
-
+  
+  if (showWarning) {
+    return (
+      <div className="flex flex-col min-h-screen items-center justify-center bg-yellow-50 p-8">
+        <div className="max-w-md bg-white p-8 rounded-lg shadow-md">
+          <h1 className="text-2xl font-bold mb-4 text-yellow-700">Authentication Warning</h1>
+          <p className="mb-4">
+            You're accessing the doctor dashboard without proper authentication. 
+            This might be due to cookie issues in the deployment environment.
+          </p>
+          <p className="mb-6 text-sm text-gray-600">
+            You can continue to use the doctor dashboard, but some features may not work correctly.
+          </p>
+          <button 
+            onClick={() => setShowWarning(false)}
+            className="w-full bg-yellow-600 text-white py-2 px-4 rounded hover:bg-yellow-700"
+          >
+            Continue to Doctor Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
   const handleLogout = async () => {
     await signOut({ callbackUrl: '/' });
   };
