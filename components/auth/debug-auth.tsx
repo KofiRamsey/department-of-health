@@ -44,6 +44,16 @@ export function DebugAuth() {
     }
   };
 
+  // Force reload current page
+  const handleForceReload = () => {
+    window.location.reload();
+  };
+
+  // Force redirect to specific dashboard
+  const handleForceDashboard = (dashboard: string) => {
+    window.location.href = dashboard;
+  };
+
   // Check cookies
   const checkCookies = () => {
     return document.cookie
@@ -110,11 +120,49 @@ export function DebugAuth() {
             size="sm" 
             variant="outline" 
             onClick={handleSignOut}
-            className="bg-red-50 hover:bg-red-100 text-red-700"
+            className="bg-red-50 hover:bg-red-100 text-red-700 mr-2"
           >
             Force Sign Out
           </Button>
+          
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={handleForceReload}
+            className="bg-blue-50 hover:bg-blue-100 text-blue-700"
+          >
+            Force Reload
+          </Button>
         </div>
+        
+        {session?.user?.role && (
+          <div className="mt-2">
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => handleForceDashboard("/admin")}
+              className="bg-green-50 hover:bg-green-100 text-green-700 mr-2"
+            >
+              Go to Admin
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => handleForceDashboard("/doctor")}
+              className="bg-purple-50 hover:bg-purple-100 text-purple-700 mr-2"
+            >
+              Go to Doctor
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => handleForceDashboard("/patient")}
+              className="bg-yellow-50 hover:bg-yellow-100 text-yellow-700"
+            >
+              Go to Patient
+            </Button>
+          </div>
+        )}
       </div>
       
       {error && (

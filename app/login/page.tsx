@@ -59,7 +59,35 @@ function LoginForm() {
       
       console.log(`Attempting sign in for ${email}, URL callback: ${urlCallbackParam}, prop callback: ${callbackUrl}`);
       
-      // Set redirect to false to handle redirection manually
+      // Use redirect: true for admin and test accounts for direct server-side redirection
+      // This is more reliable in production and ensures cookies are properly set
+      if (email === "admin@health.example.com") {
+        await signIn("credentials", {
+          email,
+          password,
+          redirect: true,
+          callbackUrl: "/admin"
+        });
+        return; // No need to continue execution
+      } else if (email === "doctor@health.example.com") {
+        await signIn("credentials", {
+          email,
+          password,
+          redirect: true,
+          callbackUrl: "/doctor"
+        });
+        return; // No need to continue execution
+      } else if (email === "patient@health.example.com") {
+        await signIn("credentials", {
+          email,
+          password,
+          redirect: true,
+          callbackUrl: "/patient"
+        });
+        return; // No need to continue execution
+      }
+      
+      // For other accounts, continue with manual handling
       const result = await signIn("credentials", {
         email,
         password,
@@ -81,16 +109,9 @@ function LoginForm() {
         let destinationUrl = '/';
         
         // Priority order: 
-        // 1. Direct role paths for test accounts
-        // 2. URL callback parameter
-        // 3. Default homepage
-        if (email === "admin@health.example.com") {
-          destinationUrl = "/admin";
-        } else if (email === "doctor@health.example.com") {
-          destinationUrl = "/doctor";
-        } else if (email === "patient@health.example.com") {
-          destinationUrl = "/patient";
-        } else if (urlCallbackParam && urlCallbackParam !== "/" && !urlCallbackParam.includes("login")) {
+        // 1. URL callback parameter
+        // 2. Default homepage
+        if (urlCallbackParam && urlCallbackParam !== "/" && !urlCallbackParam.includes("login")) {
           // Use the callback from URL directly, handle URL encoding
           destinationUrl = decodeURIComponent(urlCallbackParam);
         } else if (callbackUrl && callbackUrl !== "/" && !callbackUrl.includes("login")) {
@@ -139,30 +160,17 @@ function LoginForm() {
     try {
       console.log(`Attempting demo login as ${type}`);
       
-      // Using redirect: false for manual redirection
-      const result = await signIn("credentials", {
+      // Using server-side redirect for demo logins
+      // This ensures cookies are properly set by letting NextAuth handle the flow
+      await signIn("credentials", {
         email,
         password,
-        redirect: false
+        redirect: true,
+        callbackUrl: destinationUrl
       });
       
-      console.log("Demo login result:", result);
-      
-      if (result?.error) {
-        setFormError(`Failed to login with ${type} demo account. Please try again.`);
-        setIsLoading(false);
-        return;
-      }
-      
-      if (result?.ok) {
-        setSuccess(`Successfully logged in as ${type}! Redirecting...`);
-        
-        // Direct page navigation with forceful reload
-        console.log(`Redirecting to ${destinationUrl}`);
-        setTimeout(() => {
-          window.location.replace(destinationUrl);
-        }, 500);
-      }
+      // This code won't execute when redirect:true is used
+      setSuccess(`Successfully logged in as ${type}! Redirecting...`);
     } catch (error) {
       console.error("Demo login error:", error);
       setFormError("An unexpected error occurred. Please try again.");
