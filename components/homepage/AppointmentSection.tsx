@@ -1,10 +1,20 @@
+'use client';
+
 import Image from 'next/image'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardHeader, CardContent } from "@/components/ui/card"
+import { useState } from 'react'
+import { getImageUrl, getFallbackImageUrl } from '@/lib/utils'
 
 export function AppointmentSection() {
+  const [imgError, setImgError] = useState(false);
+  
+  const imageSrc = imgError 
+    ? getFallbackImageUrl('/nurse.png')
+    : getImageUrl('/nurse.png');
+
   return (
     <section className="container mx-auto py-16 px-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
@@ -36,12 +46,13 @@ export function AppointmentSection() {
 
         <div className="relative w-full h-[600px] lg:h-[800px]">
           <Image 
-            src="/nurse.png" 
+            src={imageSrc}
             alt="Medical Professional" 
             fill
             className="object-cover object-center rounded-lg"
             sizes="(max-width: 1024px) 100vw, 50vw"
             quality={100}
+            onError={() => setImgError(true)}
           />
         </div>
       </div>

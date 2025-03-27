@@ -10,7 +10,7 @@ const baseUrl = process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://$
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db),
-  debug: process.env.NODE_ENV !== "production",
+  debug: process.env.NODE_ENV === "development",
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -19,7 +19,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        console.log("Authorize function called with:", credentials);
+        console.log("Authorize function called with credentials");
         
         if (!credentials?.email || !credentials?.password) {
           console.log("Missing credentials");
@@ -130,8 +130,16 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  jwt: {
-    secret: process.env.NEXTAUTH_SECRET,
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
   },
   secret: process.env.NEXTAUTH_SECRET,
 };

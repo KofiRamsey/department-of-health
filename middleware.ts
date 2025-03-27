@@ -33,12 +33,17 @@ const roleDashboards = {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Check if the path is a public asset - always allow access
+  // Check if the path is a public asset or authentication-related - always allow access
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/images") ||
     pathname.startsWith("/public") ||
-    pathname.includes("favicon")
+    pathname.includes("favicon") ||
+    pathname.startsWith("/api/auth") ||
+    pathname.includes(".jpg") ||
+    pathname.includes(".png") ||
+    pathname.includes(".svg") ||
+    pathname.includes(".ico")
   ) {
     return NextResponse.next();
   }
@@ -47,7 +52,8 @@ export async function middleware(request: NextRequest) {
   try {
     const token = await getToken({ 
       req: request,
-      secret: process.env.NEXTAUTH_SECRET 
+      secret: process.env.NEXTAUTH_SECRET,
+      secureCookie: process.env.NODE_ENV === "production"
     });
 
     // Log token for debugging in non-production environments
@@ -100,12 +106,16 @@ export async function middleware(request: NextRequest) {
   } catch (error) {
     console.error("Middleware error:", error);
     
-    // If there's an error in the middleware, let the request through
-    // The route handlers can handle further authentication if needed
+    // If there's an error in the middleware, redirect to login for non-API routes
+    if (!pathname.startsWith("/api") && !pathname.startsWith("/_next") && !pathname.startsWith("/api/auth")) {
+      return NextResponse.redirect(new URL("/login?error=middleware_error", request.url));
+    }
+    
+    // For API routes, continue
     return NextResponse.next();
   }
 }
 
 export const config = {
-  matcher: ["/((?!api/auth|_next/static|_next/image).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 }; 

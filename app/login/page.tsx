@@ -6,6 +6,18 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { MailIcon, KeyIcon, Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import { DebugAuth } from "@/components/auth/debug-auth";
+
+// Error messages mapping
+const errorMessages = {
+  "CredentialsSignin": "Invalid email or password",
+  "callback": "Invalid callback URL",
+  "default": "An error occurred during sign in",
+  "middleware_error": "Authentication service is unavailable. Please try again.",
+  "OAuthAccountNotLinked": "Email already exists with a different provider",
+  "EmailSignin": "Check your email for a sign in link",
+  "SessionRequired": "You must be signed in to access this page"
+};
 
 // Component that uses search params - must be wrapped in Suspense
 function LoginForm() {
@@ -24,9 +36,7 @@ function LoginForm() {
   useEffect(() => {
     // Handle URL errors and messages
     if (error) {
-      setFormError(error === "CredentialsSignin" 
-        ? "Invalid email or password" 
-        : "An error occurred during sign in");
+      setFormError(errorMessages[error as keyof typeof errorMessages] || errorMessages.default);
     } else if (message) {
       if (message.includes("success")) {
         setSuccess(message);
@@ -43,6 +53,8 @@ function LoginForm() {
     setSuccess("");
     
     try {
+      console.log(`Attempting sign in for ${email} with callback URL: ${callbackUrl}`);
+      
       const result = await signIn("credentials", {
         email,
         password,
@@ -50,32 +62,35 @@ function LoginForm() {
         callbackUrl
       });
       
-      if (process.env.NODE_ENV !== "production") {
-        console.log("Sign in result:", result);
-      }
+      console.log("Sign in result:", result);
       
       if (result?.error) {
-        setFormError("Invalid email or password");
+        setFormError("Invalid email or password. Please try again.");
         setIsLoading(false);
         return;
       }
       
       if (result?.ok) {
-        // Get user role and redirect to appropriate dashboard
-        if (email === "admin@health.example.com") {
-          router.push("/admin");
-        } else if (email === "doctor@health.example.com") {
-          router.push("/doctor");
-        } else if (email === "patient@health.example.com") {
-          router.push("/patient");
-        } else {
-          // For database users or fallback
-          router.push(result.url || callbackUrl || "/");
-        }
+        setSuccess("Login successful! Redirecting...");
+        
+        // Small delay for feedback before redirect
+        setTimeout(() => {
+          // Get user role and redirect to appropriate dashboard
+          if (email === "admin@health.example.com") {
+            router.push("/admin");
+          } else if (email === "doctor@health.example.com") {
+            router.push("/doctor");
+          } else if (email === "patient@health.example.com") {
+            router.push("/patient");
+          } else {
+            // For database users or fallback
+            router.push(result.url || callbackUrl || "/");
+          }
+        }, 500);
       }
     } catch (error) {
       console.error("Sign in error:", error);
-      setFormError("An error occurred. Please try again.");
+      setFormError("An unexpected error occurred. Please try again.");
       setIsLoading(false);
     }
   };
@@ -102,6 +117,8 @@ function LoginForm() {
     }
     
     try {
+      console.log(`Attempting demo login as ${type}`);
+      
       const result = await signIn("credentials", {
         email,
         password,
@@ -109,30 +126,38 @@ function LoginForm() {
         callbackUrl
       });
       
+      console.log("Demo login result:", result);
+      
       if (result?.error) {
-        setFormError("Failed to login with demo account");
+        setFormError(`Failed to login with ${type} demo account. Please try again.`);
         setIsLoading(false);
         return;
       }
       
       if (result?.ok) {
-        // Direct redirection based on type
-        switch(type) {
-          case "admin":
-            router.push("/admin");
-            break;
-          case "doctor":
-            router.push("/doctor");
-            break;
-          case "patient":
-            router.push("/patient");
-            break;
-          default:
-            router.push(callbackUrl || "/");
-        }
+        setSuccess(`Successfully logged in as ${type}! Redirecting...`);
+        
+        // Small delay for feedback
+        setTimeout(() => {
+          // Direct redirection based on type
+          switch(type) {
+            case "admin":
+              router.push("/admin");
+              break;
+            case "doctor":
+              router.push("/doctor");
+              break;
+            case "patient":
+              router.push("/patient");
+              break;
+            default:
+              router.push(callbackUrl || "/");
+          }
+        }, 500);
       }
     } catch (error) {
-      setFormError("An error occurred. Please try again.");
+      console.error("Demo login error:", error);
+      setFormError("An unexpected error occurred. Please try again.");
       setIsLoading(false);
     }
   };
@@ -310,6 +335,8 @@ function LoginForm() {
               </Link>
             </div>
           </div>
+          
+          <DebugAuth />
         </div>
       </div>
     </div>

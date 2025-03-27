@@ -2,7 +2,8 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ["randomuser.me"],
+    domains: ["randomuser.me", "msebetsi-department-of-health.vercel.app"],
+    unoptimized: process.env.NODE_ENV === 'production',
   },
   typescript: {
     // !! WARN !!

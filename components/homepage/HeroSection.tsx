@@ -1,18 +1,29 @@
+'use client';
+
 import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
+import { useState } from 'react'
+import { getImageUrl, getFallbackImageUrl } from '@/lib/utils'
 
 export function HeroSection() {
+  const [imgError, setImgError] = useState(false);
+  
+  const imageSrc = imgError 
+    ? getFallbackImageUrl('/hero-section.jpg')
+    : getImageUrl('/hero-section.jpg');
+
   return (
     <section className="relative w-full h-[calc(100vh-120px)]">
       {/* Background Image */}
       <Image 
-        src="/hero-section.jpg"
+        src={imageSrc}
         alt="Hero Background"
         fill
         className="object-cover object-center"
         priority
         sizes="100vw"
+        onError={() => setImgError(true)}
       />
       
       {/* Overlay */}
