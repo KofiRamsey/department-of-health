@@ -1,137 +1,60 @@
-import { NextRequest, NextResponse } from "next/server";
-import { authOptions } from "@/lib/auth";
-import { getServerSession } from "next-auth";
-import { cookies } from "next/headers";
-import { encode } from "next-auth/jwt";
+import { NextRequest, NextResponse } from 'next/server';
+import { createSessionCookie } from '@/lib/session';
 
-export async function POST(request: NextRequest) {
-  try {
-    // Get credentials from request
-    const { email, password, destination, redirect = false } = await request.json();
-    const host = request.headers.get('host') || '';
-    
-    // Admin check for direct login without all the NextAuth handling
-    if (email === "admin@health.example.com" && password === "Admin123!") {
-      // Create a manual session cookie with required fields for admin
-      const sessionToken = await encode({
-        token: {
-          id: "admin-id",
-          email: "admin@health.example.com",
-          name: "Admin User",
-          role: "ADMIN",
-          sub: "admin-id",
-          iat: Math.floor(Date.now() / 1000),
-          exp: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60), // 30 days
-          jti: "direct-login-" + Math.random().toString(36).substring(2, 10)
-        },
-        secret: process.env.NEXTAUTH_SECRET || "my-direct-login-secret",
-      });
-      
-      // Set cookie directly - using more basic approach
-      // that works better in Vercel environments
-      const cookieString = `next-auth.session-token=${sessionToken}; Path=/; Max-Age=${30 * 24 * 60 * 60}; SameSite=Lax; HttpOnly`;
-      
-      // If redirect requested, do a direct server-side redirect
-      if (redirect) {
-        const dashboardUrl = destination || "/admin";
-        const response = NextResponse.redirect(new URL(dashboardUrl, request.url));
-        response.headers.set('Set-Cookie', cookieString);
-        return response;
-      }
-      
-      // Otherwise return JSON with set-cookie header
-      const response = NextResponse.json({ 
-        success: true,
-        redirectTo: destination || "/admin",
-        message: "Direct login successful"
-      });
-      
-      response.headers.set('Set-Cookie', cookieString);
-      return response;
+export async function GET(req: NextRequest) {
+  // Get the role from URL params
+  const searchParams = req.nextUrl.searchParams;
+  const role = searchParams.get('role');
+  const redirect = searchParams.get('redirect') || '/';
+
+  // Validate role
+  if (!role || !['admin', 'doctor', 'patient'].includes(role)) {
+    return new NextResponse(
+      JSON.stringify({ 
+        success: false, 
+        message: 'Invalid role parameter. Use one of: admin, doctor, patient' 
+      }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // Create user session data based on role
+  let sessionData = {
+    user: {
+      id: `test-${role}-id`,
+      email: `test-${role}@example.com`,
+      name: `Test ${role.charAt(0).toUpperCase() + role.slice(1)}`,
+      role: role,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 86400, // 24 hours
     }
-    
-    // Doctor check
-    if (email === "doctor@health.example.com" && password === "Doctor123!") {
-      const sessionToken = await encode({
-        token: {
-          id: "doctor-id",
-          email: "doctor@health.example.com",
-          name: "Doctor User",
-          role: "DOCTOR",
-          sub: "doctor-id",
-          iat: Math.floor(Date.now() / 1000),
-          exp: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60),
-          jti: "direct-login-" + Math.random().toString(36).substring(2, 10)
-        },
-        secret: process.env.NEXTAUTH_SECRET || "my-direct-login-secret",
-      });
-      
-      const cookieString = `next-auth.session-token=${sessionToken}; Path=/; Max-Age=${30 * 24 * 60 * 60}; SameSite=Lax; HttpOnly`;
-      
-      if (redirect) {
-        const dashboardUrl = destination || "/doctor";
-        const response = NextResponse.redirect(new URL(dashboardUrl, request.url));
-        response.headers.set('Set-Cookie', cookieString);
-        return response;
+  };
+
+  // Create session cookie
+  const sessionCookie = createSessionCookie(sessionData);
+
+  // Create appropriate response based on redirect parameter
+  if (redirect) {
+    // Redirect response with cookie
+    const response = NextResponse.redirect(new URL(redirect, req.url));
+    response.headers.set('Set-Cookie', sessionCookie);
+    return response;
+  } else {
+    // JSON response with cookie
+    const response = new NextResponse(
+      JSON.stringify({ 
+        success: true, 
+        message: `Successfully logged in as ${role}`,
+        user: sessionData.user
+      }),
+      { 
+        status: 200, 
+        headers: { 
+          'Content-Type': 'application/json',
+        }
       }
-      
-      const response = NextResponse.json({ 
-        success: true,
-        redirectTo: destination || "/doctor",
-        message: "Direct login successful"
-      });
-      
-      response.headers.set('Set-Cookie', cookieString);
-      return response;
-    }
-    
-    // Patient check
-    if (email === "patient@health.example.com" && password === "Patient123!") {
-      const sessionToken = await encode({
-        token: {
-          id: "patient-id",
-          email: "patient@health.example.com",
-          name: "Patient User",
-          role: "PATIENT",
-          sub: "patient-id",
-          iat: Math.floor(Date.now() / 1000),
-          exp: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60),
-          jti: "direct-login-" + Math.random().toString(36).substring(2, 10)
-        },
-        secret: process.env.NEXTAUTH_SECRET || "my-direct-login-secret",
-      });
-      
-      const cookieString = `next-auth.session-token=${sessionToken}; Path=/; Max-Age=${30 * 24 * 60 * 60}; SameSite=Lax; HttpOnly`;
-      
-      if (redirect) {
-        const dashboardUrl = destination || "/patient";
-        const response = NextResponse.redirect(new URL(dashboardUrl, request.url));
-        response.headers.set('Set-Cookie', cookieString);
-        return response;
-      }
-      
-      const response = NextResponse.json({ 
-        success: true,
-        redirectTo: destination || "/patient",
-        message: "Direct login successful"
-      });
-      
-      response.headers.set('Set-Cookie', cookieString);
-      return response;
-    }
-    
-    // If no test account matches, return error
-    return NextResponse.json({ 
-      success: false,
-      message: "Invalid credentials"
-    }, { status: 401 });
-    
-  } catch (error) {
-    console.error("Direct login error:", error);
-    return NextResponse.json({ 
-      success: false,
-      message: "An error occurred during direct login",
-      error: String(error)
-    }, { status: 500 });
+    );
+    response.headers.set('Set-Cookie', sessionCookie);
+    return response;
   }
 } 

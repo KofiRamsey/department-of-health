@@ -19,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { DatePicker } from "@/components/ui/date-picker"
-import { signOut, useSession } from "next-auth/react"
+import { DebugAuth } from "@/components/auth/debug-auth"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
@@ -94,231 +94,120 @@ const recentActivities = [
 ];
 
 export default function DoctorDashboard() {
-  const { data: session, status } = useSession();
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<any>(null);
   const [showWarning, setShowWarning] = useState(false);
   
+  // Fetch session data from our debug-session API
   useEffect(() => {
-    // If authentication is still loading, wait
-    if (status === 'loading') return;
-    
-    // Check if user is authenticated and has the right role
-    if (!session) {
-      setShowWarning(true);
-    } else if (session.user.role !== 'DOCTOR' && session.user.role !== 'ADMIN') {
-      router.push('/unauthorized');
-    }
-  }, [session, status, router]);
-  
-  if (status === 'loading') {
-    return <div className="flex min-h-screen items-center justify-center">Loading...</div>;
-  }
-  
-  if (showWarning) {
+    fetch('/api/auth/debug-session')
+      .then(res => res.json())
+      .then(data => {
+        setSession(data.session);
+        
+        // If no session found, show the warning
+        if (!data.session) {
+          setShowWarning(true);
+        } else if (data.session.user?.role !== 'doctor' && data.session.user?.role !== 'admin') {
+          // Redirect if not doctor or admin
+          router.push('/unauthorized');
+        }
+        
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error fetching session:', err);
+        setShowWarning(true);
+        setLoading(false);
+      });
+  }, [router]);
+
+  const handleContinueAnyway = () => {
+    setShowWarning(false);
+  };
+
+  if (loading) {
     return (
-      <div className="flex flex-col min-h-screen items-center justify-center bg-yellow-50 p-8">
-        <div className="max-w-md bg-white p-8 rounded-lg shadow-md">
-          <h1 className="text-2xl font-bold mb-4 text-yellow-700">Authentication Warning</h1>
-          <p className="mb-4">
-            You're accessing the doctor dashboard without proper authentication. 
-            This might be due to cookie issues in the deployment environment.
-          </p>
-          <p className="mb-6 text-sm text-gray-600">
-            You can continue to use the doctor dashboard, but some features may not work correctly.
-          </p>
-          <button 
-            onClick={() => setShowWarning(false)}
-            className="w-full bg-yellow-600 text-white py-2 px-4 rounded hover:bg-yellow-700"
-          >
-            Continue to Doctor Dashboard
-          </button>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold mb-2">Loading...</h2>
+          <p className="text-gray-500">Checking your session</p>
         </div>
       </div>
     );
   }
-  
-  const handleLogout = async () => {
-    await signOut({ callbackUrl: '/' });
-  };
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">Welcome, {session.user.name || 'Doctor'}</h1>
-            <p className="text-muted-foreground">Doctor Dashboard</p>
-          </div>
-          <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-4">
-            <DatePicker />
-            <Button className="w-full sm:w-auto">
-              <UserPlus className="mr-2 h-4 w-4" />
-              Add New Patient
-            </Button>
-            <Button variant="outline" onClick={handleLogout} className="w-full sm:w-auto">
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </Button>
-          </div>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-blue-100 rounded-lg">
-                    <Users className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Total Patients</h3>
-                    <p className="text-2xl font-bold">248</p>
-                  </div>
-                </div>
-                <TrendingUp className="h-4 w-4 text-green-500" />
-              </div>
-              <p className="text-sm text-green-600 mt-2">+12% from last month</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-green-100 rounded-lg">
-                  <Calendar className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <h3 className="font-medium">Today's Appointments</h3>
-                  <p className="text-2xl font-bold">12</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-purple-100 rounded-lg">
-                  <Activity className="h-6 w-6 text-purple-600" />
-                </div>
-                <div>
-                  <h3 className="font-medium">Pending Reports</h3>
-                  <p className="text-2xl font-bold">5</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-orange-100 rounded-lg">
-                  <MessageSquare className="h-6 w-6 text-orange-600" />
-                </div>
-                <div>
-                  <h3 className="font-medium">Messages</h3>
-                  <p className="text-2xl font-bold">8</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-          {/* Today's Schedule */}
-          <Card className="lg:col-span-2">
-            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0 pb-2">
-              <CardTitle className="text-xl font-bold">Today's Schedule</CardTitle>
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
-                <div className="relative flex-1 sm:flex-initial">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    placeholder="Search patients..." 
-                    className="pl-8 w-full"
-                  />
-                </div>
-                <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  View Calendar
+    <div className="container mx-auto p-6">
+      {/* Warning for unauthenticated users */}
+      {showWarning && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+          <div className="flex">
+            <div>
+              <h3 className="text-yellow-800 font-medium">Authentication Warning</h3>
+              <p className="text-yellow-700 mt-1">
+                You are not properly authenticated. This could be due to cookie issues with the deployment.
+              </p>
+              <div className="mt-3">
+                <Button 
+                  onClick={handleContinueAnyway}
+                  size="sm"
+                  variant="outline"
+                  className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                >
+                  Continue to Doctor Dashboard Anyway
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {appointments.map((appointment, i) => (
-                  <div key={i} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors gap-4">
-                    <div className="flex items-center gap-4 w-full sm:w-auto">
-                      <div className="bg-blue-100 p-3 rounded-full">
-                        <Clock className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium">{appointment.name}</h4>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-sm text-muted-foreground">{appointment.type}</p>
-                          <Badge variant={appointment.status === 'Confirmed' ? 'success' : 'warning'}>
-                            {appointment.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
-                      <p className="font-medium">{appointment.time}</p>
-                      <Button variant="outline" size="sm" className="ml-auto sm:ml-0">
-                        View Details
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Quick Actions */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {quickActions.map((action, index) => (
-                  <Button 
-                    key={index}
-                    variant="outline" 
-                    className="w-full justify-start hover:bg-gray-100 transition-colors"
-                    onClick={action.onClick}
-                  >
-                    {action.icon}
-                    {action.label}
-                  </Button>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Recent Activity */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {recentActivities.map((activity, i) => (
-                    <div key={i} className="flex items-center gap-4 hover:bg-gray-50 p-2 rounded-md transition-colors">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                      <div>
-                        <p className="text-sm font-medium">{activity.title}</p>
-                        <p className="text-xs text-muted-foreground">{activity.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            </div>
           </div>
         </div>
+      )}
+      
+      <h1 className="text-3xl font-bold mb-6">Doctor Dashboard</h1>
+      
+      {session?.user && (
+        <div className="bg-green-50 border border-green-200 p-4 rounded-md mb-6">
+          <h2 className="text-green-800 font-medium">Authenticated as Doctor</h2>
+          <p className="text-green-700 text-sm mt-1">
+            Logged in as {session.user.name} ({session.user.email})
+          </p>
+        </div>
+      )}
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader className="bg-blue-50">
+            <CardTitle className="text-blue-700">Appointments</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <p className="text-gray-600 mb-4">Manage your appointments</p>
+            <Button className="w-full">View Appointments</Button>
+          </CardContent>
+        </Card>
+        
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader className="bg-purple-50">
+            <CardTitle className="text-purple-700">Patient Records</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <p className="text-gray-600 mb-4">Access patient medical records</p>
+            <Button className="w-full">View Records</Button>
+          </CardContent>
+        </Card>
+        
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader className="bg-green-50">
+            <CardTitle className="text-green-700">Schedule Management</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <p className="text-gray-600 mb-4">Manage your work schedule</p>
+            <Button className="w-full">Manage Schedule</Button>
+          </CardContent>
+        </Card>
       </div>
-    </main>
-  )
+      
+      <DebugAuth />
+    </div>
+  );
 }

@@ -19,232 +19,123 @@ import {
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import * as React from "react"
+import { DebugAuth } from '@/components/auth/debug-auth'
 
 export default function PatientDashboard() {
-  const { data: session, status } = useSession();
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<any>(null);
   const [showWarning, setShowWarning] = useState(false);
   
+  // Fetch session data from our debug-session API
   useEffect(() => {
-    // If authentication is still loading, wait
-    if (status === 'loading') return;
-    
-    // Check if user is authenticated and has the right role
-    if (!session) {
-      setShowWarning(true);
-    } else if (session.user.role !== 'PATIENT' && session.user.role !== 'ADMIN') {
-      router.push('/unauthorized');
-    }
-  }, [session, status, router]);
-  
-  if (status === 'loading') {
-    return <div className="flex min-h-screen items-center justify-center">Loading...</div>;
-  }
-  
-  if (showWarning) {
+    fetch('/api/auth/debug-session')
+      .then(res => res.json())
+      .then(data => {
+        setSession(data.session);
+        
+        // If no session found, show the warning
+        if (!data.session) {
+          setShowWarning(true);
+        } else if (data.session.user?.role !== 'patient' && data.session.user?.role !== 'admin') {
+          // Redirect if not patient or admin
+          router.push('/unauthorized');
+        }
+        
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error fetching session:', err);
+        setShowWarning(true);
+        setLoading(false);
+      });
+  }, [router]);
+
+  const handleContinueAnyway = () => {
+    setShowWarning(false);
+  };
+
+  if (loading) {
     return (
-      <div className="flex flex-col min-h-screen items-center justify-center bg-yellow-50 p-8">
-        <div className="max-w-md bg-white p-8 rounded-lg shadow-md">
-          <h1 className="text-2xl font-bold mb-4 text-yellow-700">Authentication Warning</h1>
-          <p className="mb-4">
-            You're accessing the patient dashboard without proper authentication. 
-            This might be due to cookie issues in the deployment environment.
-          </p>
-          <p className="mb-6 text-sm text-gray-600">
-            You can continue to use the patient dashboard, but some features may not work correctly.
-          </p>
-          <button 
-            onClick={() => setShowWarning(false)}
-            className="w-full bg-yellow-600 text-white py-2 px-4 rounded hover:bg-yellow-700"
-          >
-            Continue to Patient Dashboard
-          </button>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold mb-2">Loading...</h2>
+          <p className="text-gray-500">Checking your session</p>
         </div>
       </div>
     );
   }
 
-  const handleLogout = async () => {
-    await signOut({ callbackUrl: '/' });
-  }
-
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        {/* Welcome Section with Notifications */}
-        <div className="mb-8 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">Welcome, {session.user.name || 'Patient'}</h1>
-            <p className="text-muted-foreground">Patient Dashboard</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon">
-              <Bell className="h-5 w-5" />
-            </Button>
-            <Button variant="outline" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
-          </div>
-        </div>
-
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {[
-            {
-              icon: <Calendar className="h-6 w-6 text-blue-600" />,
-              title: "Next Appointment",
-              value: "15 March, 2024",
-              bg: "bg-blue-100"
-            },
-            {
-              icon: <Activity className="h-6 w-6 text-green-600" />,
-              title: "Health Score",
-              value: "85/100",
-              bg: "bg-green-100"
-            },
-            {
-              icon: <Pill className="h-6 w-6 text-purple-600" />,
-              title: "Active Prescriptions",
-              value: "2 Medications",
-              bg: "bg-purple-100"
-            },
-            {
-              icon: <MessageSquare className="h-6 w-6 text-orange-600" />,
-              title: "Pending Messages",
-              value: "3 Unread",
-              bg: "bg-orange-100"
-            }
-          ].map((stat, i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4">
-                  <div className={`p-3 rounded-lg ${stat.bg}`}>
-                    {stat.icon}
-                  </div>
-                  <div>
-                    <h3 className="font-medium">{stat.title}</h3>
-                    <p className="text-sm text-muted-foreground">{stat.value}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Appointments Section */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  Upcoming Appointments
-                </CardTitle>
-                <Button variant="outline" size="sm">View All</Button>
+    <div className="container mx-auto p-6">
+      {/* Warning for unauthenticated users */}
+      {showWarning && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+          <div className="flex">
+            <div>
+              <h3 className="text-yellow-800 font-medium">Authentication Warning</h3>
+              <p className="text-yellow-700 mt-1">
+                You are not properly authenticated. This could be due to cookie issues with the deployment.
+              </p>
+              <div className="mt-3">
+                <Button 
+                  onClick={handleContinueAnyway}
+                  size="sm"
+                  variant="outline"
+                  className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                >
+                  Continue to Patient Dashboard Anyway
+                </Button>
               </div>
-              <CardDescription>Your next 3 scheduled appointments</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[
-                  {
-                    doctor: "Dr. Sarah Wilson",
-                    type: "General Checkup",
-                    date: "March 15, 2024",
-                    time: "09:30 AM"
-                  },
-                  {
-                    doctor: "Dr. Michael Chen",
-                    type: "Blood Test Results",
-                    date: "March 20, 2024",
-                    time: "02:00 PM"
-                  },
-                  {
-                    doctor: "Dr. Emily Brown",
-                    type: "Follow-up",
-                    date: "March 28, 2024",
-                    time: "11:15 AM"
-                  }
-                ].map((appointment, i) => (
-                  <div 
-                    key={i} 
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <div>
-                      <h4 className="font-medium">{appointment.doctor}</h4>
-                      <p className="text-sm text-muted-foreground">{appointment.type}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">{appointment.date}</p>
-                      <p className="text-sm text-muted-foreground">{appointment.time}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Quick Actions Card */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-                <CardDescription>Access common patient services</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {[
-                  { 
-                    icon: <User className="h-4 w-4" />, 
-                    label: "View Profile", 
-                    href: "#profile",
-                    color: "text-blue-600" 
-                  },
-                  { 
-                    icon: <FileText className="h-4 w-4" />, 
-                    label: "Medical Records", 
-                    href: "#records",
-                    color: "text-green-600"
-                  },
-                  { 
-                    icon: <Pill className="h-4 w-4" />, 
-                    label: "Prescriptions", 
-                    href: "#prescriptions",
-                    color: "text-purple-600"
-                  },
-                  { 
-                    icon: <BarChart className="h-4 w-4" />, 
-                    label: "Lab Results", 
-                    href: "#results",
-                    color: "text-orange-600"
-                  },
-                  { 
-                    icon: <Settings className="h-4 w-4" />, 
-                    label: "Settings", 
-                    href: "#settings",
-                    color: "text-gray-600"
-                  }
-                ].map((action, i) => (
-                  <Button 
-                    key={i}
-                    variant="outline" 
-                    className="w-full justify-start hover:bg-gray-50 transition-colors" 
-                    asChild
-                  >
-                    <a href={action.href} className="flex items-center">
-                      <span className={`mr-2 ${action.color}`}>
-                        {action.icon}
-                      </span>
-                      {action.label}
-                    </a>
-                  </Button>
-                ))}
-              </CardContent>
-            </Card>
+            </div>
           </div>
         </div>
+      )}
+      
+      <h1 className="text-3xl font-bold mb-6">Patient Dashboard</h1>
+      
+      {session?.user && (
+        <div className="bg-green-50 border border-green-200 p-4 rounded-md mb-6">
+          <h2 className="text-green-800 font-medium">Authenticated as Patient</h2>
+          <p className="text-green-700 text-sm mt-1">
+            Logged in as {session.user.name} ({session.user.email})
+          </p>
+        </div>
+      )}
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader className="bg-blue-50">
+            <CardTitle className="text-blue-700">My Appointments</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <p className="text-gray-600 mb-4">View and manage your appointments</p>
+            <Button className="w-full">View Appointments</Button>
+          </CardContent>
+        </Card>
+        
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader className="bg-purple-50">
+            <CardTitle className="text-purple-700">Medical Records</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <p className="text-gray-600 mb-4">Access your medical history</p>
+            <Button className="w-full">View Records</Button>
+          </CardContent>
+        </Card>
+        
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader className="bg-green-50">
+            <CardTitle className="text-green-700">Book Appointment</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <p className="text-gray-600 mb-4">Schedule a new appointment</p>
+            <Button className="w-full">Book Now</Button>
+          </CardContent>
+        </Card>
       </div>
-    </main>
+      
+      <DebugAuth />
+    </div>
   )
 }

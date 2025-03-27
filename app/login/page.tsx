@@ -1,430 +1,192 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { MailIcon, KeyIcon, Loader2, AlertCircle, CheckCircle } from "lucide-react";
-import { DebugAuth } from "@/components/auth/debug-auth";
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 
-// Error messages mapping
-const errorMessages = {
-  "CredentialsSignin": "Invalid email or password",
-  "callback": "Invalid callback URL",
-  "default": "An error occurred during sign in",
-  "middleware_error": "Authentication service is unavailable. Please try again.",
-  "OAuthAccountNotLinked": "Email already exists with a different provider",
-  "EmailSignin": "Check your email for a sign in link",
-  "SessionRequired": "You must be signed in to access this page"
-};
-
-// Component that uses search params - must be wrapped in Suspense
-function LoginForm() {
+export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
-  const message = searchParams.get("message");
-  const error = searchParams.get("error");
-  
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [formError, setFormError] = useState("");
-  const [success, setSuccess] = useState("");
-  
-  useEffect(() => {
-    // Handle URL errors and messages
-    if (error) {
-      setFormError(errorMessages[error as keyof typeof errorMessages] || errorMessages.default);
-    } else if (message) {
-      if (message.includes("success")) {
-        setSuccess(message);
-      } else {
-        setFormError(message);
-      }
-    }
-  }, [message, error]);
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const callbackUrl = searchParams?.get('callbackUrl') || '/';
+
+  // Quick login functions for testing
+  const handleQuickLogin = async (role: string) => {
     setIsLoading(true);
-    setFormError("");
-    setSuccess("");
-    
     try {
-      // Get the callback URL from the URL parameters
-      const urlParams = new URLSearchParams(window.location.search);
-      const urlCallbackParam = urlParams.get("callbackUrl");
-      
-      console.log(`Attempting sign in for ${email}, URL callback: ${urlCallbackParam}, prop callback: ${callbackUrl}`);
-      
-      // Use redirect: true for admin and test accounts for direct server-side redirection
-      // This is more reliable in production and ensures cookies are properly set
-      if (email === "admin@health.example.com") {
-        await signIn("credentials", {
-          email,
-          password,
-          redirect: true,
-          callbackUrl: "/admin"
-        });
-        return; // No need to continue execution
-      } else if (email === "doctor@health.example.com") {
-        await signIn("credentials", {
-          email,
-          password,
-          redirect: true,
-          callbackUrl: "/doctor"
-        });
-        return; // No need to continue execution
-      } else if (email === "patient@health.example.com") {
-        await signIn("credentials", {
-          email,
-          password,
-          redirect: true,
-          callbackUrl: "/patient"
-        });
-        return; // No need to continue execution
-      }
-      
-      // For other accounts, continue with manual handling
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false
-      });
-      
-      console.log("Sign in result:", result);
-      
-      if (result?.error) {
-        setFormError("Invalid email or password. Please try again.");
-        setIsLoading(false);
-        return;
-      }
-      
-      if (result?.ok) {
-        setSuccess("Login successful! Redirecting...");
-        
-        // Direct role-based redirection
-        let destinationUrl = '/';
-        
-        // Priority order: 
-        // 1. URL callback parameter
-        // 2. Default homepage
-        if (urlCallbackParam && urlCallbackParam !== "/" && !urlCallbackParam.includes("login")) {
-          // Use the callback from URL directly, handle URL encoding
-          destinationUrl = decodeURIComponent(urlCallbackParam);
-        } else if (callbackUrl && callbackUrl !== "/" && !callbackUrl.includes("login")) {
-          destinationUrl = callbackUrl;
-        }
-        
-        console.log(`Redirecting user to: ${destinationUrl}`);
-        
-        // Use replace for a cleaner browser history and more forceful redirect
-        setTimeout(() => {
-          window.location.replace(destinationUrl);
-        }, 500);
-      }
-    } catch (error) {
-      console.error("Sign in error:", error);
-      setFormError("An unexpected error occurred. Please try again.");
-      setIsLoading(false);
-    }
-  };
-  
-  const handleDemoLogin = async (type: string) => {
-    setIsLoading(true);
-    setFormError("");
-    let email = "";
-    let password = "";
-    let destinationUrl = "/";
-    
-    switch(type) {
-      case "admin":
-        email = "admin@health.example.com";
-        password = "Admin123!";
-        destinationUrl = "/admin";
-        break;
-      case "doctor":
-        email = "doctor@health.example.com";
-        password = "Doctor123!";
-        destinationUrl = "/doctor";
-        break;
-      case "patient":
-        email = "patient@health.example.com";
-        password = "Patient123!";
-        destinationUrl = "/patient";
-        break;
-    }
-    
-    try {
-      console.log(`Attempting demo login as ${type}`);
-      
-      // Using server-side redirect for demo logins
-      // This ensures cookies are properly set by letting NextAuth handle the flow
-      await signIn("credentials", {
-        email,
-        password,
-        redirect: true,
-        callbackUrl: destinationUrl
-      });
-      
-      // This code won't execute when redirect:true is used
-      setSuccess(`Successfully logged in as ${type}! Redirecting...`);
-    } catch (error) {
-      console.error("Demo login error:", error);
-      setFormError("An unexpected error occurred. Please try again.");
-      setIsLoading(false);
-    }
-  };
-  
-  const handleDirectAdminLogin = async () => {
-    setIsLoading(true);
-    setFormError("");
-    setSuccess("Attempting direct login with server redirect...");
-    
-    try {
-      // Call our custom direct login API with redirect=true for server-side redirection
-      const response = await fetch('/api/auth/direct-login', {
-        method: 'POST',
+      // Use our new direct login endpoint
+      const response = await fetch(`/api/auth/direct-login?role=${role}&redirect=${callbackUrl}`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email: "admin@health.example.com",
-          password: "Admin123!",
-          destination: "/admin",
-          redirect: true
-        }),
       });
-      
-      // If we get here, it means the redirect didn't happen
-      // In this case, we'll try client-side navigation as a fallback
-      setSuccess("Server redirect failed, trying client-side navigation...");
-      window.location.href = "/admin";
-    } catch (error) {
-      console.error("Direct login error:", error);
-      setFormError("An unexpected error occurred during direct login");
+
+      if (response.redirected) {
+        // If we got redirected, follow the redirect
+        window.location.href = response.url;
+        return;
+      }
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Login failed');
+      }
+
+      const data = await response.json();
+      router.push(callbackUrl);
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during login');
+    } finally {
       setIsLoading(false);
-      
-      // As a final fallback, try direct navigation
-      setTimeout(() => {
-        window.location.href = "/admin";
-      }, 1000);
     }
   };
-  
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            Sign in to your account
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Or{" "}
-            <Link href="/register" className="text-primary hover:text-primary/90">
-              create a new account
-            </Link>
-          </p>
-        </div>
-        
-        <div className="mt-8 bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          {formError && (
-            <div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700 flex items-center">
-              <AlertCircle className="h-5 w-5 mr-2" />
-              {formError}
-            </div>
-          )}
-          
-          {success && (
-            <div className="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700 flex items-center">
-              <CheckCircle className="h-5 w-5 mr-2" />
-              {success}
-            </div>
-          )}
-          
-          {/* Debug information - remove in production when fixed */}
-          <div className="mb-4 text-xs bg-gray-50 p-3 rounded text-gray-500 overflow-auto max-h-20">
-            <div>Current URL: {typeof window !== 'undefined' ? window.location.href : 'N/A'}</div>
-            <div>Callback URL: {callbackUrl || 'None'}</div>
-            <div>Search Params: {typeof window !== 'undefined' ? window.location.search : 'N/A'}</div>
-            
-            <div className="mt-2 pt-2 border-t border-gray-200">
-              <button 
-                onClick={() => window.location.href = "/admin"}
-                className="bg-red-50 text-red-700 px-2 py-1 rounded text-xs"
-              >
-                WORKAROUND: Go directly to /admin
-              </button>
-            </div>
-          </div>
-          
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <MailIcon className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
-                  placeholder="you@example.com"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <KeyIcon className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
-                  placeholder="••••••••"
-                />
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                  Remember me
-                </label>
-              </div>
-              
-              <div className="text-sm">
-                <Link href="#" className="text-primary hover:text-primary/90">
-                  Forgot your password?
-                </Link>
-              </div>
-            </div>
-            
-            <div>
-              <Button
-                type="submit"
-                className="w-full py-2"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
-                  </>
-                ) : (
-                  "Sign in"
-                )}
-              </Button>
-            </div>
-          </form>
-          
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">
-                  Test Accounts
-                </span>
-              </div>
-            </div>
-            
-            <div className="mt-6 grid grid-cols-1 gap-3">
-              <Button 
-                onClick={() => handleDemoLogin("admin")}
-                variant="outline"
-                className="flex justify-center"
-                disabled={isLoading}
-              >
-                Admin Login
-              </Button>
-              
-              <Button 
-                onClick={() => handleDirectAdminLogin()}
-                variant="outline"
-                className="bg-red-50 text-red-700 flex justify-center"
-                disabled={isLoading}
-              >
-                Direct Admin Login (API)
-              </Button>
-              
-              <Button 
-                onClick={() => handleDemoLogin("doctor")}
-                variant="outline"
-                className="flex justify-center"
-                disabled={isLoading}
-              >
-                Doctor Login
-              </Button>
-              
-              <Button 
-                onClick={() => handleDemoLogin("patient")}
-                variant="outline"
-                className="flex justify-center"
-                disabled={isLoading}
-              >
-                Patient Login
-              </Button>
-            </div>
-          </div>
-          
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">
-                  Or continue with
-                </span>
-              </div>
-            </div>
-            
-            <div className="mt-6">
-              <Link href="/" className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                Back to Home
-              </Link>
-            </div>
-          </div>
-          
-          <DebugAuth />
-        </div>
-      </div>
-    </div>
-  );
-}
 
-// Main page component wrapping with Suspense
-export default function LoginPage() {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      // Form validation
+      if (!email || !password) {
+        throw new Error('Please fill in all fields');
+      }
+
+      // Determine role based on email for testing
+      let role = '';
+      if (email.includes('admin')) role = 'admin';
+      else if (email.includes('doctor')) role = 'doctor';
+      else if (email.includes('patient')) role = 'patient';
+      else throw new Error('Invalid email format for test accounts');
+
+      await handleQuickLogin(role);
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during login');
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
-      <LoginForm />
-    </Suspense>
+    <div className="flex items-center justify-center min-h-screen bg-slate-50">
+      {/* Debug information */}
+      <div className="fixed top-0 left-0 right-0 bg-yellow-100 p-2 text-xs text-yellow-800">
+        Current URL: {typeof window !== 'undefined' ? window.location.href : ''}
+        <br />
+        Callback URL: {callbackUrl}
+        <br />
+        <Button
+          size="sm"
+          variant="outline" 
+          className="bg-red-50 hover:bg-red-100 text-red-700 mt-1"
+          onClick={() => router.push('/admin')}
+        >
+          WORKAROUND: Go directly to /admin
+        </Button>
+      </div>
+
+      <Card className="w-[350px] shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardDescription>
+            Enter your credentials to access your dashboard
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
+
+          {/* Quick login options */}
+          <div className="space-y-2 mb-4">
+            <div className="text-sm font-medium text-gray-500 mb-2">Quick login as:</div>
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                size="sm" 
+                variant="outline"
+                className="bg-blue-50 hover:bg-blue-100 text-blue-700"
+                onClick={() => handleQuickLogin('admin')}
+                disabled={isLoading}
+              >
+                Admin
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                className="bg-green-50 hover:bg-green-100 text-green-700"
+                onClick={() => handleQuickLogin('doctor')}
+                disabled={isLoading}
+              >
+                Doctor
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                className="bg-purple-50 hover:bg-purple-100 text-purple-700"
+                onClick={() => handleQuickLogin('patient')}
+                disabled={isLoading}
+              >
+                Patient
+              </Button>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-white px-2 text-gray-500">Or continue with</span>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="admin@health.example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Logging in...' : 'Login'}
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className="flex flex-col">
+          <div className="text-sm text-gray-500 text-center w-full">
+            Don't have an account?{' '}
+            <Link href="/register" className="underline text-blue-600 hover:text-blue-800">
+              Register
+            </Link>
+          </div>
+        </CardFooter>
+      </Card>
+    </div>
   );
 }

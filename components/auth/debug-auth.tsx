@@ -2,181 +2,131 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { useSession, signOut } from 'next-auth/react';
+import { createSessionCookie } from '@/lib/session';
 
 export function DebugAuth() {
+  const [cookies, setCookies] = useState<string[]>([]);
+  const [sessionData, setSessionData] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
-  const [authStatus, setAuthStatus] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  // Get session data from useSession hook
-  const { data: session, status: sessionStatus } = useSession();
 
-  // Check authentication status
-  const checkAuth = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const response = await fetch('/api/auth/check');
-      if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}`);
+  // Function to refresh cookie info
+  const refreshCookieInfo = () => {
+    // Get all cookies
+    const allCookies = document.cookie.split(';').map(cookie => cookie.trim());
+    setCookies(allCookies);
+
+    // Try to find and parse our session cookie
+    const sessionCookie = allCookies.find(cookie => cookie.startsWith('session='));
+    if (sessionCookie) {
+      try {
+        const cookieValue = sessionCookie.split('=')[1];
+        fetch('/api/auth/debug-session')
+          .then(res => res.json())
+          .then(data => {
+            setSessionData(data.session || null);
+          })
+          .catch(err => {
+            console.error('Error fetching session data:', err);
+          });
+      } catch (error) {
+        console.error('Error parsing session cookie:', error);
       }
-      
-      const data = await response.json();
-      setAuthStatus(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error occurred');
-      console.error('Auth check error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Force clear session
-  const handleSignOut = async () => {
-    try {
-      await signOut({ redirect: false });
-      window.location.href = '/login'; // Force reload to login page
-    } catch (err) {
-      console.error('Sign out error:', err);
-    }
-  };
-
-  // Force reload current page
-  const handleForceReload = () => {
-    window.location.reload();
-  };
-
-  // Force redirect to specific dashboard
-  const handleForceDashboard = (dashboard: string) => {
-    window.location.href = dashboard;
-  };
-
-  // Check cookies
-  const checkCookies = () => {
-    return document.cookie
-      .split(';')
-      .map(cookie => cookie.trim())
-      .filter(cookie => 
-        cookie.startsWith('next-auth.session-token=') || 
-        cookie.startsWith('next-auth.csrf-token=') ||
-        cookie.startsWith('__Secure-next-auth.session-token=')
-      );
-  };
-
-  // Force set a cookie for testing
-  const handleSetTestCookie = () => {
-    try {
-      // Create a simple test cookie
-      document.cookie = "next-auth.test-cookie=test-value; path=/; max-age=3600; SameSite=Lax";
-      alert("Test cookie has been set. Check cookies again.");
-      // Refresh the page to update cookie display
-      window.location.reload();
-    } catch (err) {
-      console.error('Error setting test cookie:', err);
-      alert('Failed to set test cookie: ' + err);
-    }
-  };
-
-  // Force set admin cookie for testing
-  const handleSetAdminCookie = () => {
-    try {
-      // Create a simple session cookie with admin role
-      const jwtValue = btoa(JSON.stringify({
-        id: "admin-id",
-        email: "admin@health.example.com",
-        name: "Admin User",
-        role: "ADMIN"
-      }));
-      
-      document.cookie = `next-auth.session-token=${jwtValue}; path=/; max-age=86400; SameSite=Lax; HttpOnly=false`;
-      document.cookie = `next-auth.csrf-token=csrf-token-value; path=/; max-age=86400; SameSite=Lax`;
-      
-      alert("Admin session cookies have been set. Check cookies again and reload.");
-      
-      // Refresh the page to update cookie display
-      window.location.reload();
-    } catch (err) {
-      console.error('Error setting session cookie:', err);
-      alert('Failed to set session cookie: ' + err);
+    } else {
+      setSessionData(null);
     }
   };
 
   useEffect(() => {
-    if (showDebug) {
-      checkAuth();
+    refreshCookieInfo();
+  }, []);
+
+  // Function to set a test cookie
+  const handleSetTestCookie = () => {
+    document.cookie = `test-cookie=debug-value;path=/;max-age=3600`;
+    refreshCookieInfo();
+    alert('Test cookie set! Check the cookies list.');
+  };
+
+  // Function to set an admin session cookie
+  const handleSetAdminCookie = () => {
+    try {
+      // Admin user data
+      const adminData = {
+        user: {
+          id: 'admin-id',
+          email: 'admin@example.com',
+          name: 'Admin User',
+          role: 'admin',
+          iat: Math.floor(Date.now() / 1000),
+          exp: Math.floor(Date.now() / 1000) + 86400, // 24 hours
+        }
+      };
+
+      // Create cookie string
+      const cookieString = createSessionCookie(adminData, { 
+        httpOnly: false, // Make it visible to JS for debugging
+        secure: false,   // Allow on non-HTTPS for local testing
+      });
+
+      // Set the cookie
+      document.cookie = cookieString;
+      
+      alert('Admin session cookie set!');
+      refreshCookieInfo();
+      window.location.reload(); // Reload to update the cookie display
+    } catch (error) {
+      console.error('Error setting admin cookie:', error);
+      alert(`Failed to set admin cookie: ${error}`);
     }
-  }, [showDebug]);
+  };
+
+  // Function to sign out by clearing all auth cookies
+  const handleClearCookies = () => {
+    // Clear potential auth cookies with different attributes to ensure complete removal
+    document.cookie = 'session=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    document.cookie = 'next-auth.session-token=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    document.cookie = 'next-auth.csrf-token=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    document.cookie = 'next-auth.callback-url=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    refreshCookieInfo();
+    alert('All authentication cookies cleared!');
+  };
 
   if (!showDebug) {
     return (
       <div className="mt-4 text-center">
-        <button 
+        <Button 
+          size="sm" 
+          variant="outline" 
           onClick={() => setShowDebug(true)}
-          className="text-xs text-gray-400 hover:text-gray-600"
+          className="text-xs bg-gray-100"
         >
-          Debug Authentication
-        </button>
+          Show Debug Tools
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="mt-8 p-4 border rounded-md bg-gray-50">
-      <h3 className="font-semibold mb-2">Authentication Debug</h3>
-      
-      <div className="mb-4">
-        <div className="text-sm mb-1">Session Status: <span className="font-medium">{sessionStatus}</span></div>
-        {session && (
-          <div className="text-xs mt-1">
-            <div>User ID: {session.user?.id || 'Not available'}</div>
-            <div>Email: {session.user?.email || 'Not available'}</div>
-            <div>Role: {session.user?.role || 'Not available'}</div>
-          </div>
-        )}
-        
-        <div className="text-xs mt-2">
-          <div>Current URL: <code>{typeof window !== 'undefined' ? window.location.href : ''}</code></div>
-          <div>Base URL: <code>{typeof window !== 'undefined' ? window.location.origin : ''}</code></div>
-          <div>Environment: <code>{process.env.NODE_ENV || 'unknown'}</code></div>
-        </div>
-        
-        <div className="mt-4">
-          <Button 
-            size="sm" 
-            variant="outline" 
-            onClick={checkAuth} 
-            disabled={loading}
-            className="mr-2"
-          >
-            {loading ? 'Checking...' : 'Check Server Auth'}
-          </Button>
-          
-          <Button 
-            size="sm" 
-            variant="outline" 
-            onClick={handleSignOut}
-            className="bg-red-50 hover:bg-red-100 text-red-700 mr-2"
-          >
-            Force Sign Out
-          </Button>
-          
-          <Button 
-            size="sm" 
-            variant="outline" 
-            onClick={handleForceReload}
-            className="bg-blue-50 hover:bg-blue-100 text-blue-700 mr-2"
-          >
-            Force Reload
-          </Button>
-          
+    <div className="mt-6 p-4 border border-gray-200 rounded-md bg-gray-50">
+      <div className="flex justify-between items-center mb-3">
+        <h3 className="text-sm font-semibold">Auth Debug Information</h3>
+        <Button 
+          size="sm" 
+          variant="outline" 
+          onClick={() => setShowDebug(false)}
+          className="text-xs"
+        >
+          Hide Debug
+        </Button>
+      </div>
+
+      <div className="space-y-2 text-xs">
+        <div className="flex space-x-2">
           <Button 
             size="sm" 
             variant="outline" 
             onClick={handleSetTestCookie}
-            className="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 mr-2"
+            className="text-xs mr-2"
           >
             Set Test Cookie
           </Button>
@@ -185,76 +135,59 @@ export function DebugAuth() {
             size="sm" 
             variant="outline" 
             onClick={handleSetAdminCookie}
-            className="bg-green-50 hover:bg-green-100 text-green-700"
+            className="text-xs bg-green-50 hover:bg-green-100 text-green-700"
           >
             Set Admin Cookie
           </Button>
+          
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={handleClearCookies}
+            className="text-xs bg-red-50 hover:bg-red-100 text-red-700"
+          >
+            Clear All Cookies
+          </Button>
+          
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={refreshCookieInfo}
+            className="text-xs"
+          >
+            Refresh
+          </Button>
         </div>
-        
-        {session?.user?.role && (
-          <div className="mt-2">
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={() => handleForceDashboard("/admin")}
-              className="bg-green-50 hover:bg-green-100 text-green-700 mr-2"
-            >
-              Go to Admin
-            </Button>
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={() => handleForceDashboard("/doctor")}
-              className="bg-purple-50 hover:bg-purple-100 text-purple-700 mr-2"
-            >
-              Go to Doctor
-            </Button>
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={() => handleForceDashboard("/patient")}
-              className="bg-yellow-50 hover:bg-yellow-100 text-yellow-700"
-            >
-              Go to Patient
-            </Button>
-          </div>
-        )}
-      </div>
-      
-      {error && (
-        <div className="mt-2 text-xs text-red-600">{error}</div>
-      )}
-      
-      {authStatus && (
-        <div className="mt-4">
-          <h4 className="text-sm font-medium mb-1">API Auth Status</h4>
-          <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto max-h-40">
-            {JSON.stringify(authStatus, null, 2)}
-          </pre>
-        </div>
-      )}
-      
-      <div className="mt-4">
-        <h4 className="text-sm font-medium mb-1">Auth Cookies</h4>
-        <div className="text-xs">
-          {checkCookies().length > 0 ? (
-            <ul className="list-disc pl-4">
-              {checkCookies().map((cookie, i) => (
-                <li key={i} className="break-all">{cookie}</li>
+
+        <div className="mt-2">
+          <h4 className="font-semibold mb-1">Current Cookies:</h4>
+          {cookies.length > 0 ? (
+            <ul className="list-disc list-inside">
+              {cookies.map((cookie, index) => (
+                <li key={index} className="break-all">{cookie}</li>
               ))}
             </ul>
           ) : (
-            <p className="text-red-600">No auth cookies found!</p>
+            <p className="text-gray-500">No cookies found</p>
           )}
         </div>
+
+        <div className="mt-2">
+          <h4 className="font-semibold mb-1">Session Data:</h4>
+          {sessionData ? (
+            <pre className="bg-gray-100 p-2 rounded overflow-auto max-h-40">
+              {JSON.stringify(sessionData, null, 2)}
+            </pre>
+          ) : (
+            <p className="text-gray-500">No session data found</p>
+          )}
+        </div>
+
+        <div className="mt-2 text-gray-500">
+          <p>Current location: {typeof window !== 'undefined' ? window.location.href : ''}</p>
+          <p>Base URL: {typeof window !== 'undefined' ? window.location.origin : ''}</p>
+        </div>
       </div>
-      
-      <button 
-        onClick={() => setShowDebug(false)}
-        className="mt-4 text-xs text-gray-500 hover:text-gray-700"
-      >
-        Hide Debug Info
-      </button>
     </div>
   );
 } 
