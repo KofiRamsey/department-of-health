@@ -2,7 +2,6 @@
 
 import { ArrowLeft, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { UserButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
 export default function UnauthorizedPage() {
@@ -14,7 +13,6 @@ export default function UnauthorizedPage() {
         <Button variant="ghost" size="icon" onClick={() => router.back()}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <UserButton afterSignOutUrl="/" />
       </div>
       
       <div className="flex flex-col items-center justify-center max-w-md text-center">

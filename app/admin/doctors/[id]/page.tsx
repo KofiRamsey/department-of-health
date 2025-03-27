@@ -2,28 +2,20 @@ import { requireRole } from "@/lib/auth-utils";
 import { db } from "@/lib/db";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { DoctorDetailClient } from "@/components/admin/DoctorDetailClient";
 
-type DoctorParams = { id: string };
-
-// This helps TypeScript understand the params structure
-export async function generateStaticParams() {
-  return [];
-}
-
-// Define the page component
-export default async function DoctorDetailPage({params}: {params: DoctorParams}) {
+// Using the simplest possible approach for Next.js 14 compatibility
+export default async function DoctorDetailPage(props) {
+  const { id } = props.params;
+  
   // Ensure user is admin
   await requireRole(["ADMIN"]);
   
   try {
     // Get doctor
     const doctor = await db.doctor.findUnique({
-      where: {
-        id: params.id,
-      },
+      where: { id },
       include: {
         user: true,
         services: true,

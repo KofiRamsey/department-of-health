@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { MailIcon, KeyIcon, Loader2, AlertCircle, CheckCircle } from "lucide-react";
 
-export default function LoginPage() {
+// Component that uses search params - must be wrapped in Suspense
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
@@ -253,41 +254,64 @@ export default function LoginPage() {
             </div>
             
             <div className="mt-6 grid grid-cols-1 gap-3">
-              <div className="grid grid-cols-1 gap-2">
-                <Button
-                  onClick={() => handleDemoLogin("admin")}
-                  variant="outline"
-                  className="w-full"
-                  disabled={isLoading}
-                >
-                  Login as Admin
-                </Button>
-                <Button
-                  onClick={() => handleDemoLogin("doctor")}
-                  variant="outline"
-                  className="w-full"
-                  disabled={isLoading}
-                >
-                  Login as Doctor
-                </Button>
-                <Button
-                  onClick={() => handleDemoLogin("patient")}
-                  variant="outline"
-                  className="w-full"
-                  disabled={isLoading}
-                >
-                  Login as Patient
-                </Button>
+              <Button 
+                onClick={() => handleDemoLogin("admin")}
+                variant="outline"
+                className="flex justify-center"
+                disabled={isLoading}
+              >
+                Admin Login
+              </Button>
+              
+              <Button 
+                onClick={() => handleDemoLogin("doctor")}
+                variant="outline"
+                className="flex justify-center"
+                disabled={isLoading}
+              >
+                Doctor Login
+              </Button>
+              
+              <Button 
+                onClick={() => handleDemoLogin("patient")}
+                variant="outline"
+                className="flex justify-center"
+                disabled={isLoading}
+              >
+                Patient Login
+              </Button>
+            </div>
+          </div>
+          
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
               </div>
-              <div className="text-xs text-gray-500 text-center mt-3">
-                <p><strong>Admin:</strong> admin@health.example.com / Admin123!</p>
-                <p><strong>Doctor:</strong> doctor@health.example.com / Doctor123!</p>
-                <p><strong>Patient:</strong> patient@health.example.com / Patient123!</p>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">
+                  Or continue with
+                </span>
               </div>
+            </div>
+            
+            <div className="mt-6">
+              <Link href="/" className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                Back to Home
+              </Link>
             </div>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+// Main page component wrapping with Suspense
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

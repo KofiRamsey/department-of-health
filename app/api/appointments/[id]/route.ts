@@ -34,7 +34,7 @@ async function getCurrentUser() {
 // Get a single appointment
 export async function GET(
   req: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await requireAuth();
@@ -54,7 +54,7 @@ export async function GET(
       );
     }
 
-    const { id } = context.params;
+    const { id } = params;
 
     const appointment = await db.appointment.findUnique({
       where: { id },
@@ -117,7 +117,7 @@ export async function GET(
 // Update an appointment status
 export async function PATCH(
   req: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await requireAuth();
@@ -137,7 +137,7 @@ export async function PATCH(
       );
     }
 
-    const { id } = context.params;
+    const { id } = params;
     const body = await req.json();
     const { status, notes, date, time } = body;
 
@@ -213,10 +213,10 @@ export async function PATCH(
   }
 }
 
-// Cancel/delete an appointment
+// Delete an appointment
 export async function DELETE(
   req: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await requireAuth();
@@ -236,7 +236,7 @@ export async function DELETE(
       );
     }
 
-    const { id } = context.params;
+    const { id } = params;
 
     // Find appointment
     const appointment = await db.appointment.findUnique({
@@ -254,40 +254,30 @@ export async function DELETE(
       );
     }
 
-    // Check if user has permission to cancel this appointment
+    // Check if user has permission to delete this appointment
+    // Only admin or the patient who created the appointment can delete it
     if (
       user.role !== "ADMIN" &&
-      ((user.role === "DOCTOR" && appointment.doctor.userId !== user.id) &&
-       (user.role === "PATIENT" && appointment.patient.userId !== user.id))
+      (user.role !== "PATIENT" || appointment.patient.userId !== user.id)
     ) {
       return NextResponse.json(
-        { error: "Not authorized to cancel this appointment" },
+        { error: "Not authorized to delete this appointment" },
         { status: 403 }
       );
     }
 
-    // If user is admin or doctor, actually delete the appointment
-    if (user.role === "ADMIN" || user.role === "DOCTOR") {
-      await db.appointment.delete({
-        where: { id },
-      });
-    } else {
-      // If user is patient, just mark as cancelled
-      await db.appointment.update({
-        where: { id },
-        data: {
-          status: "CANCELLED",
-        },
-      });
-    }
+    // Delete appointment
+    await db.appointment.delete({
+      where: { id },
+    });
 
     return NextResponse.json(
-      { message: "Appointment cancelled successfully" }
+      { message: "Appointment deleted successfully" }
     );
   } catch (error) {
-    console.error("Error cancelling appointment:", error);
+    console.error("Error deleting appointment:", error);
     return NextResponse.json(
-      { error: "Failed to cancel appointment" },
+      { error: "Failed to delete appointment" },
       { status: 500 }
     );
   }

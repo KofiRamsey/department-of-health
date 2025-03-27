@@ -1,15 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { useUser, UserProfile } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useRouter } from 'next/navigation';
 
 export default function ProfilePage() {
-  const { user, isLoaded } = useUser();
-  const [activeTab, setActiveTab] = useState('clerk');
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState('account');
 
-  if (!isLoaded) {
+  if (status === 'loading') {
     return (
       <div className="flex items-center justify-center min-h-[70vh]">
         <p>Loading...</p>
@@ -17,39 +21,49 @@ export default function ProfilePage() {
     );
   }
 
+  if (!session) {
+    router.push('/login');
+    return null;
+  }
+
   return (
     <div className="container mx-auto py-10 px-4">
       <h1 className="text-3xl font-bold mb-8">Profile Management</h1>
       
-      <Tabs defaultValue="clerk" onValueChange={setActiveTab}>
+      <Tabs defaultValue="account" onValueChange={setActiveTab}>
         <TabsList className="grid w-full max-w-md grid-cols-2 mb-8">
-          <TabsTrigger value="clerk">Clerk Profile</TabsTrigger>
-          <TabsTrigger value="additional">Additional Info</TabsTrigger>
+          <TabsTrigger value="account">Account</TabsTrigger>
+          <TabsTrigger value="additional">Health Info</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="clerk" className="space-y-6">
+        <TabsContent value="account" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>User Profile</CardTitle>
               <CardDescription>Manage your personal information</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="w-full max-w-4xl mx-auto">
-                <UserProfile
-                  appearance={{
-                    elements: {
-                      rootBox: {
-                        boxShadow: 'none',
-                        width: '100%',
-                      },
-                      card: {
-                        border: 'none',
-                        boxShadow: 'none',
-                        width: '100%',
-                      },
-                    },
-                  }}
-                />
+              <div className="w-full max-w-4xl mx-auto space-y-6">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-medium">Profile Information</h3>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <label htmlFor="name">Name</label>
+                      <Input id="name" defaultValue={session.user?.name || ''} disabled />
+                    </div>
+                    <div className="grid gap-2">
+                      <label htmlFor="email">Email</label>
+                      <Input id="email" defaultValue={session.user?.email || ''} disabled />
+                    </div>
+                    <div className="grid gap-2">
+                      <label htmlFor="role">Role</label>
+                      <Input id="role" defaultValue={session.user?.role || ''} disabled />
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Contact an administrator to update your account information.
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -58,8 +72,8 @@ export default function ProfilePage() {
         <TabsContent value="additional" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Additional Information</CardTitle>
-              <CardDescription>Health-specific data not covered by Clerk</CardDescription>
+              <CardTitle>Health Information</CardTitle>
+              <CardDescription>Health-specific data for your profile</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -73,8 +87,9 @@ export default function ProfilePage() {
                   <li>Preferred healthcare providers</li>
                 </ul>
                 <p className="text-sm text-muted-foreground mt-4">
-                  This section would be connected to your database for storing healthcare-specific user data.
+                  This section would be connected to the database for storing healthcare-specific user data.
                 </p>
+                <Button className="mt-4">Update Health Information</Button>
               </div>
             </CardContent>
           </Card>
